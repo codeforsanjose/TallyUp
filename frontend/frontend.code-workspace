@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"node_modules/": true
+		},
+		// "typescript.preferences.importModuleSpecifierEnding": "js",
+		"typescript.tsdk": "node_modules\\typescript\\lib",
+		"editor.tabSize": 2,
+    // "explorer.sortOrder": "mixed"
+    "editor.detectIndentation": false,
+    "jest.runMode": "on-demand"
+	}
+}
