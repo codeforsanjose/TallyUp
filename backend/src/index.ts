@@ -1,6 +1,5 @@
-import express from "express";
+import express, { Router } from "express";
 // import { logger } from "./logging/logger";
-import { Router } from "express";
 const router = Router();
 
 router.get("/", (req, res) => {
