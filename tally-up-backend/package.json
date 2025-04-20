@@ -8,10 +8,13 @@
         "@aws-sdk/lib-dynamodb": "^3.398.0"
     },
     "devDependencies": {
+        "@types/bun": "^1.2.10",
         "aws-sdk-client-mock": "^2.0.0",
         "jest": "^29.2.1"
     },
-    "scripts": {},
+    "scripts": {
+        "build": "bun ./scripts/build.ts"
+    },
     "jest": {
         "testMatch": [
             "**/__tests__/**/*.[jt]s?(x)",
