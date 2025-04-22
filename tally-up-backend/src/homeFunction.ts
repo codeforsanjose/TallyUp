@@ -7,6 +7,6 @@ export const handler = async (): Promise<APIGatewayProxyResultV2> => {
     headers: {
       'Content-Type': 'text/html',
     },
-    body: fs.readFileSync('./index.html', 'utf-8')
-  }
-}
+    body: fs.readFileSync('./index.html', 'utf-8'),
+  };
+};

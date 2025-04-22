@@ -1,11 +1,6 @@
 // https://bun.sh/docs/typescript#suggested-compileroptions
 {
-  "exclude": [
-    "node_modules",
-    "build",
-    "bun.lockb",
-    "bun.lock",
-  ],  
+  "exclude": ["node_modules", "build", "bun.lockb", "bun.lock"],
   "compilerOptions": {
     // Environment setup & latest features
     "target": "ES2024", // https://node.green/#ES2025 when aws lambda moves on from 22.x, look at changing this
@@ -26,6 +21,6 @@
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noPropertyAccessFromIndexSignature": true,
-  },
+    "noPropertyAccessFromIndexSignature": true
+  }
 }
