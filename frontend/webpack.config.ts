@@ -18,7 +18,7 @@ const config: WebpackConfiguration = {
     mode: undefined,
     entry: "./src/index.tsx",
     output: {
-        publicPath: '/',
+        publicPath: '/prod', // TODO: required until proper domain is set up
         path: path.resolve(__dirname, "dist"),
     },
     performance: {
@@ -89,7 +89,7 @@ const config: WebpackConfiguration = {
     },
     resolve: {
         fallback: {
-    
+
         },
         extensions: [".tsx", ".ts", ".jsx", ".js", '.css', '.scss', '.sass', "..."],
     },

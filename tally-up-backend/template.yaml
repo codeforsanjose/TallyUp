@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  tally-up-backend
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures:
+      - x86_64
+    MemorySize: 128
+    Timeout: 100
+    CodeUri: ./ # Not the function source code, but the location of the Makefile
+
+Resources:
+  apiMain:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Description: API for Tally Up
+      StageName: prod
+      FailOnWarnings: true
+  homeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: homeFunction.handler
+      Events:
+        BasePathEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: GET
+            Path: (none)
+            TimeoutInMillis: 5000
+        IndexPathEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: GET
+            Path: /
+            TimeoutInMillis: 5000
+        DashboardPathEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: GET
+            Path: /dashboard
+            TimeoutInMillis: 5000
+    Metadata:
+      BuildMethod: makefile
+  staticServeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: staticServeFunction.handler
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: GET
+            Path: /main.js
+            TimeoutInMillis: 5000
+    Metadata:
+      BuildMethod: makefile
