@@ -5,7 +5,8 @@
   "private": true,
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.398.0",
-    "@aws-sdk/lib-dynamodb": "^3.398.0"
+    "@aws-sdk/lib-dynamodb": "^3.398.0",
+    "htmx.org": "^2.0.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.149",
@@ -15,7 +16,6 @@
     "prettier": "^3.5.3"
   },
   "scripts": {
-    "build": "bun ./scripts/build.ts",
     "format": "bun run prettier --write ."
   },
   "jest": {

@@ -25,13 +25,6 @@ Resources:
     Properties:
       Handler: homeFunction.handler
       Events:
-        BasePathEvent:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref apiMain
-            Method: GET
-            Path: (none)
-            TimeoutInMillis: 5000
         IndexPathEvent:
           Type: HttpApi
           Properties:
@@ -48,17 +41,17 @@ Resources:
             TimeoutInMillis: 5000
     Metadata:
       BuildMethod: makefile
-  staticServeFunction:
+  pageContentFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: staticServeFunction.handler
+      Handler: pageContentFunction.handler
       Events:
-        ApiEvent:
+        PageContentPathEvent:
           Type: HttpApi
           Properties:
             ApiId: !Ref apiMain
             Method: GET
-            Path: /main.js
+            Path: /page-content
             TimeoutInMillis: 5000
     Metadata:
       BuildMethod: makefile

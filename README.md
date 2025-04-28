@@ -12,3 +12,9 @@ Evolved MealTally repo to tally and track handouts of any sort to people in need
 
 - Run `bun run build` to build the project
 - Run `sam local invoke {{functionName}}` to invoke a function locally
+- Use
+
+## Semantic Html
+
+- [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Accessibility/HTML)
+- [WAI](https://www.w3.org/WAI/standards-guidelines/aria/)
