@@ -31,3 +31,6 @@ warm_containers = "EAGER"
 
 [default.local_start_lambda.parameters]
 warm_containers = "EAGER"
+
+[default.list_stack_outputs.parameters]
+output = "json"

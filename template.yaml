@@ -55,3 +55,65 @@ Resources:
             TimeoutInMillis: 5000
     Metadata:
       BuildMethod: makefile
+  cognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      AutoVerifiedAttributes:
+        - email
+      DeletionProtection: INACTIVE # TODO: Set to ACTIVE in production
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT # TODO: Set to DEVELOPER when domain is verified
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate:
+          - email
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: false
+      UserPoolName: tally-up-user-pool
+      UserPoolTier: LITE # https://github.com/aws/serverless-application-model/issues/3726 delete this when it stops being an issue
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_LINK
+  indexDotHtml:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        ErrorDocument: index.html
+        IndexDocument: index.html
+  indexDotHtmlPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref indexDotHtml
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - s3:GetObject
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${indexDotHtml}/*"
+
+Outputs:
+  S3BucketName:
+    Description: S3 bucket name for index.html
+    Value: !Ref indexDotHtml
