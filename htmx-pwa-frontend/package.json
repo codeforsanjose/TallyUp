@@ -1,0 +1,17 @@
+{
+  "name": "htmx-pwa-frontend",
+  "module": "build/index.ts",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/serviceworker": "^0.0.132"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "html-template-tag": "^4.1.1"
+  }
+}

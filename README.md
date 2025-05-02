@@ -12,7 +12,7 @@ Evolved MealTally repo to tally and track handouts of any sort to people in need
 
 - Run `bun run build` to build the project
 - Run `sam local invoke {{functionName}}` to invoke a function locally
-- Use
+- After making a change to `openapi.yaml`, run `bun run postinstall` to update the API client
 
 ## Semantic Html
 

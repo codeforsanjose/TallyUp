@@ -6,9 +6,11 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.398.0",
     "@aws-sdk/lib-dynamodb": "^3.398.0",
+    "@hey-api/client-fetch": "^0.10.0",
     "htmx.org": "^2.0.4"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.66.7",
     "@types/aws-lambda": "^8.10.149",
     "@types/bun": "^1.2.10",
     "aws-sdk-client-mock": "^2.0.0",
@@ -16,7 +18,9 @@
     "prettier": "^3.5.3"
   },
   "scripts": {
-    "format": "bun run prettier --write ."
+    "client:frontend": "bunx @hey-api/openapi-ts -i ./openapi.yaml -o htmx-pwa-frontend/client -c @hey-api/client-fetch",
+    "format": "bun run prettier --write .",
+    "postinstall": "bun run client:frontend"
   },
   "jest": {
     "testMatch": [
@@ -28,6 +32,11 @@
     "moduleFileExtensions": [
       "mjs",
       "js"
+    ]
+  },
+  "workspaces": {
+    "packages": [
+      "htmx-pwa-frontend"
     ]
   }
 }
