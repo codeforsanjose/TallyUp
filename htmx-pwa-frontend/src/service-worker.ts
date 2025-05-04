@@ -16,9 +16,10 @@ const registerRoute = (el: Element) => {
   console.log(`Registered route for ${resource.action} ${resource.url}`);
 };
 
+registerRoute(Entry);
+
 // TODO: There are some considerations when force updating the service worker.
 self.addEventListener('install', (_) => {
-  registerRoute(Entry);
   self.skipWaiting(); // Forces immediate activation
   console.log('Service worker installed');
 });
