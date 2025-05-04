@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2024"],
+    "declaration": true,
+    "declarationDir": "./dist",
+    "emitDeclarationOnly": true,
+    "outDir": "./dist",
+    "noEmit": false
+  },
+  "include": ["index.ts"],
+  "exclude": ["node_modules", "dist", "build", "coverage", "test", "**/*.spec.ts"]
+}
