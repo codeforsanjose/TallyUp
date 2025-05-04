@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { Entry } from './app/main';
 import { boilerplate } from './lib/';
 import assert from 'node:assert';
@@ -8,7 +9,7 @@ export const build = async (): Promise<{
   mainJs: string;
 }> => {
   const swArtifacts = await Bun.build({
-    entrypoints: ['./src/service-worker.ts'],
+    entrypoints: [path.resolve(__dirname, './src/service-worker.ts')],
     target: 'browser',
     format: 'esm',
   });
@@ -16,7 +17,7 @@ export const build = async (): Promise<{
   assert(serviceWorker, 'Service worker build failed');
 
   const mainArtifacts = await Bun.build({
-    entrypoints: ['./src/main.ts'],
+    entrypoints: [path.resolve(__dirname, './src/main.ts')],
     target: 'browser',
     format: 'esm',
   });

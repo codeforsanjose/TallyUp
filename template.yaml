@@ -13,6 +13,12 @@ Globals:
     Timeout: 100
     CodeUri: ./ # Not the function source code, but the location of the Makefile
 
+Parameters:
+  TallyUpDomainPrefix:
+    Type: String
+    Description: Domain for Tally Up
+    Default: tallyup-pool
+
 Resources:
   apiMain:
     Type: AWS::Serverless::HttpApi
@@ -20,38 +26,31 @@ Resources:
       Description: API for Tally Up
       StageName: prod
       FailOnWarnings: true
-  homeFunction:
+  loginFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: homeFunction.handler
+      Handler: loginFunction.handler
       Events:
-        IndexPathEvent:
+        ApiEvent:
           Type: HttpApi
           Properties:
             ApiId: !Ref apiMain
-            Method: GET
-            Path: /
-            TimeoutInMillis: 5000
-        DashboardPathEvent:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref apiMain
-            Method: GET
-            Path: /dashboard
+            Method: POST
+            Path: /login
             TimeoutInMillis: 5000
     Metadata:
       BuildMethod: makefile
-  pageContentFunction:
+  registerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: pageContentFunction.handler
+      Handler: registerFunction.handler
       Events:
-        PageContentPathEvent:
+        ApiEvent:
           Type: HttpApi
           Properties:
             ApiId: !Ref apiMain
-            Method: GET
-            Path: /page-content
+            Method: POST
+            Path: /register
             TimeoutInMillis: 5000
     Metadata:
       BuildMethod: makefile
@@ -86,9 +85,30 @@ Resources:
       UsernameConfiguration:
         CaseSensitive: false
       UserPoolName: tally-up-user-pool
-      UserPoolTier: LITE # https://github.com/aws/serverless-application-model/issues/3726 delete this when it stops being an issue
       VerificationMessageTemplate:
         DefaultEmailOption: CONFIRM_WITH_LINK
+      UserPoolTier: LITE # https://github.com/aws/serverless-application-model/issues/3726
+  cognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref cognitoUserPool
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+      CallbackURLs:
+        - https://jwt.io
+      DefaultRedirectURI: https://jwt.io
+      SupportedIdentityProviders:
+        - COGNITO
+  cognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref TallyUpDomainPrefix
+      UserPoolId: !Ref cognitoUserPool
+      ManagedLoginVersion: 1 # https://github.com/aws/serverless-application-model/issues/3726 basically this issue but for all of cognito
   indexDotHtml:
     Type: AWS::S3::Bucket
     Properties:
@@ -112,8 +132,37 @@ Resources:
             Action:
               - s3:GetObject
             Resource: !Sub "arn:${AWS::Partition}:s3:::${indexDotHtml}/*"
+  cloudfrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: indexDotHtml
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+            DomainName: !Sub "${indexDotHtml}.s3-website.${AWS::Region}.amazonaws.com"
+        Enabled: true
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          TargetOriginId: indexDotHtml
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
 
 Outputs:
   S3BucketName:
     Description: S3 bucket name for index.html
     Value: !Ref indexDotHtml
+  CloudFrontDistributionUrl:
+    Description: CloudFront distribution URL for index.html
+    Value: !GetAtt cloudfrontDistribution.DomainName
+  TallyUpDomain:
+    Description: Domain for Tally Up
+    Value: !Sub "https://${TallyUpDomainPrefix}.auth.${AWS::Region}.amazoncognito.com"
