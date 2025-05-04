@@ -13,5 +13,8 @@
   },
   "dependencies": {
     "html-template-tag": "^4.1.1"
+  },
+  "scripts": {
+    "dev": "bun run scripts/dev.ts"
   }
 }

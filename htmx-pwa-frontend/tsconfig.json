@@ -6,9 +6,8 @@
     "declarationDir": "./dist",
     "emitDeclarationOnly": true,
     "outDir": "./dist",
-    "noEmit": false,
-    
+    "noEmit": false
   },
-  "include": ["index.ts",],
+  "include": ["index.ts"],
   "exclude": ["node_modules", "dist", "build", "coverage", "test", "**/*.spec.ts"]
 }

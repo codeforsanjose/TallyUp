@@ -14,7 +14,7 @@ const LoginBehavior: ElementBehavior = {
 
     assert(Array.isArray(LoginShape.children), 'LoginShape.children is not an array');
     const formData = await event.request.formData(); // OK because it's not multipart/form-data
-    const email = formData.get('email')
+    const email = formData.get('email');
     const password = formData.get('password');
     if (!email || !password) {
       return {
@@ -24,9 +24,9 @@ const LoginBehavior: ElementBehavior = {
           ...LoginShape,
           children: [
             ...(LoginShape.children || []),
-            { type: 'p', shape: { children: ['Email and password are required'] } }
+            { type: 'p', shape: { children: ['Email and password are required'] } },
           ],
-        }
+        },
       };
     }
 
@@ -34,7 +34,7 @@ const LoginBehavior: ElementBehavior = {
     assert(typeof password === 'string', 'password was malformed');
     const res = await client.postLogin({
       body: { email, password },
-    })
+    });
     const { data, error } = res;
     if (error) {
       return {
@@ -44,10 +44,10 @@ const LoginBehavior: ElementBehavior = {
           ...LoginShape,
           children: [
             ...(LoginShape.children || []),
-            { type: 'p', shape: { children: [error.message] } }
+            { type: 'p', shape: { children: [error.message] } },
           ],
-        }
-      }
+        },
+      };
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API#api.cookiestore
@@ -58,8 +58,8 @@ const LoginBehavior: ElementBehavior = {
       sameSite: 'strict',
     });
     return '<p>Login successful!</p>';
-  }
-}
+  },
+};
 
 const LoginShape: ElementShape = {
   children: [
@@ -80,10 +80,10 @@ const LoginShape: ElementShape = {
       type: 'button',
       shape: { attrs: ['type="submit"'], children: ['Login'] },
     },
-  ]
-}
+  ],
+};
 export const Login: Element = {
   type: 'form',
   behavior: LoginBehavior,
   shape: LoginShape,
-}
+};
