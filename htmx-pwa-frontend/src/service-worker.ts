@@ -1,4 +1,5 @@
 import { Entry } from '../app/main';
+import { renderElement } from '../lib';
 import type { Action, Element, ElementBehavior } from '../types';
 
 const routes: Record<string, ElementBehavior['onTriggered']> = {};
@@ -33,25 +34,29 @@ self.addEventListener('fetch', async (event: FetchEvent) => {
   const { request } = event;
   const method = request.method.toLowerCase() as Action;
   const pathname = new URL(event.request.url).pathname.toLowerCase();
-
-  console.log(`Request for ${pathname} with method ${method}`);
-  console.log(`Event: ${JSON.stringify(event.request, null, 2)}`);
-
   const resource = { action: method, url: pathname };
   const onTriggered = routes[`${resource.action} ${resource.url}`];
   if (!onTriggered) {
-    console.log(`No route found for ${method} ${pathname}`);
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  console.log(`Found route for ${pathname}`);
+  for (const [key, value] of request.headers) {
+    console.log(`Header: ${key}: ${value}`);
+  }
+
   event.respondWith(
     (async () => {
-      const response = await onTriggered(event, {} as any); // TODO: Doesn't use storage for now
-      if (response instanceof Response) return response;
-      return new Response(JSON.stringify(response), {
-        headers: { 'Content-Type': 'text/html' },
-      });
+      try {
+        const response = await onTriggered(event);
+        if (response instanceof Response) return response;
+        return new Response(renderElement(response), {
+          headers: { 'Content-Type': 'text/html' },
+        });
+      } catch (error) {
+        console.error(`Error in route handler for ${method} ${pathname}:`, error);
+        return new Response('Internal Server Error', { status: 500 });
+      }
     })(),
   );
 });

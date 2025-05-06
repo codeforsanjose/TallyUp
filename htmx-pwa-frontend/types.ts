@@ -1,4 +1,3 @@
-export type Action = 'get' | 'post' | 'put' | 'delete' | 'patch';
 type HtmlTag =
   | 'div'
   | 'p'
@@ -29,30 +28,51 @@ type HtmlTag =
   | 'canvas'
   | 'svg';
 
+type Queryable = string | number | boolean | null | undefined;
+
+export type Action = 'get' | 'post' | 'put' | 'delete' | 'patch';
+
 export type Element =
   | {
       type: HtmlTag;
-      behavior?: ElementBehavior;
+      behavior?: ElementBehavior<Record<string, Queryable> | undefined>;
       shape?: ElementShape;
     }
   | string;
 
 export type ElementTree = Element | Element[];
 
-export type ElementBehavior = {
+type HtmxData = Record<string, Queryable> | undefined;
+
+export type ElementBehavior<T extends HtmxData = HtmxData, H extends HtmxData = HtmxData> = {
   resource: { action: Action; url: string };
-  /** A list of attributes in the form of 'attr=val' or 'attr' for boolean attributes.*/
   triggers?: string | string[];
-  onTriggered?: (event: FetchEvent, storage: StorageContext) => Promise<ElementTree | Response>;
+  onTriggered?: (event: FetchEvent) => Promise<ElementTree | Response>;
+  headers?: H extends undefined
+    ? undefined
+    : {
+        [K in keyof H]: H[K] | (() => H[K]);
+      };
+
+  /** If no swap is specified, htmx will use 'innerHTML' by default. */
+  swap?:
+    | 'innerHTML'
+    | 'outerHTML'
+    | 'beforebegin'
+    | 'afterbegin'
+    | 'beforeend'
+    | 'afterend'
+    | 'delete'
+    | 'none';
+  values?: T extends undefined
+    ? undefined
+    : {
+        [K in keyof T]: T[K] | (() => T[K]);
+      };
 };
 
 export type ElementShape = {
+  /** A list of attributes in the form of 'attr=val' or 'attr' for boolean attributes.*/
   attrs?: string[];
   children?: ElementTree;
-};
-
-type StorageContext = {
-  cache: Cache;
-  idb: IDBDatabase;
-  cookieStore: CookieStore;
 };

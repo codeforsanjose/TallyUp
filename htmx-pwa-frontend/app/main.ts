@@ -1,5 +1,6 @@
-import html from 'html-template-tag';
 import type { Element } from '../types';
+import { user } from './idb/';
+import { Dashboard, LoginForm } from './fragments';
 
 export const Entry: Element = {
   type: 'main',
@@ -7,32 +8,22 @@ export const Entry: Element = {
     resource: { action: 'get', url: '/page-content' },
     triggers: 'load',
     onTriggered: async (event): Promise<Element | Response> => {
-      const bearer = event.request.headers.get('Authorization');
-      if (!bearer) {
-        return new Response(
-          html`
-            <a
-              href="https://tallyup-pool.auth.us-west-2.amazoncognito.com/login?client_id=4l3vcqdt5gquj6a91gklltpmce&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fjwt.io"
-            >
-              Wingo Dingo
-            </a>
-          `,
-          {
-            headers: { 'Content-Type': 'text/html' },
-          },
-        );
+      const authToken = event.request.headers.get('Authorization')?.split('Bearer ')[1];
+      if (!authToken) {
+        const { authToken } = (await user.get()) || {};
+        if (!authToken) {
+          return LoginForm;
+        }
+
+        return Dashboard(authToken);
       }
 
-      return {
-        type: 'div',
-        shape: {
-          attrs: ['hx-swap="outerHTML"'],
-          children: [
-            { type: 'h1', shape: { children: ["If you're here, signin worked."] } },
-            { type: 'p', shape: { children: ['Yay'] } },
-          ],
-        },
-      };
+      return Dashboard(authToken);
+    },
+    headers: {
+      // https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-managed-login.html#view-login-pages
+      // @ts-ignore TODO: Really bad hack. Aws wants a redirect after the user logs in. This is for that case.
+      Authorization: () => new URLSearchParams(location.search).get('code') || undefined,
     },
   },
 };
