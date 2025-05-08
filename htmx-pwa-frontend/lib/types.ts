@@ -47,7 +47,8 @@ type HtmxData = Record<string, Queryable> | undefined;
 export type ElementBehavior<T extends HtmxData = HtmxData, H extends HtmxData = HtmxData> = {
   resource: { action: Action; url: string };
   triggers?: string | string[];
-  onTriggered?: (event: FetchEvent) => Promise<ElementTree | Response>;
+  /** onTriggered is the response the service worker will return when the route is triggered. */
+  onTriggered?: (event: FetchEvent) => Promise<ElementTree>;
   headers?: H extends undefined
     ? undefined
     : {
@@ -64,6 +65,9 @@ export type ElementBehavior<T extends HtmxData = HtmxData, H extends HtmxData = 
     | 'afterend'
     | 'delete'
     | 'none';
+
+  target?: string;
+
   values?: T extends undefined
     ? undefined
     : {
@@ -75,4 +79,5 @@ export type ElementShape = {
   /** A list of attributes in the form of 'attr=val' or 'attr' for boolean attributes.*/
   attrs?: string[];
   children?: ElementTree;
+  id?: string;
 };

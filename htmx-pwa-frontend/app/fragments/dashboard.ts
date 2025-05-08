@@ -1,5 +1,5 @@
 import { fetch } from '../../lib';
-import type { Element } from '../../types';
+import type { Element } from '../../lib/types';
 
 export const Dashboard = (authToken: string): Element => {
   return {

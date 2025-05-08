@@ -1,18 +1,18 @@
-import type { Element } from '../types';
+import type { Element } from '../lib/types';
 import { user } from './idb/';
-import { Dashboard, LoginForm } from './fragments';
+import { Dashboard, AuthForm } from './fragments';
 
-export const Entry: Element = {
+const Entry: Element = {
   type: 'main',
   behavior: {
     resource: { action: 'get', url: '/page-content' },
     triggers: 'load',
-    onTriggered: async (event): Promise<Element | Response> => {
+    onTriggered: async (event): Promise<Element> => {
       const authToken = event.request.headers.get('Authorization')?.split('Bearer ')[1];
       if (!authToken) {
         const { authToken } = (await user.get()) || {};
         if (!authToken) {
-          return LoginForm;
+          return AuthForm('login');
         }
 
         return Dashboard(authToken);
@@ -27,3 +27,5 @@ export const Entry: Element = {
     },
   },
 };
+
+export default Entry;
