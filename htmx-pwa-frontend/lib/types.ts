@@ -81,3 +81,7 @@ export type ElementShape = {
   children?: ElementTree;
   id?: string;
 };
+
+export type Routes = Record<string, TriggerBehavior>;
+
+export type TriggerBehavior = NonNullable<ElementBehavior['onTriggered']>;

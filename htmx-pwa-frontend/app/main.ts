@@ -1,8 +1,8 @@
 import type { Element } from '../lib/types';
-import { user } from './idb/';
-import { Dashboard, AuthForm } from './fragments';
+import { AuthForm, Dashboard } from './fragments';
+import { user } from './idb';
 
-const Entry: Element = {
+export const Entry: Element = {
   type: 'main',
   behavior: {
     resource: { action: 'get', url: '/page-content' },
@@ -27,5 +27,3 @@ const Entry: Element = {
     },
   },
 };
-
-export default Entry;

@@ -1,28 +1,38 @@
-import { renderElement, getRoutes } from '..';
-import { registerElement } from '../register-element';
+import { boilerplate, renderElement } from '..';
+import { getRoute } from '../routing';
 import type { Action } from '../types';
+import { Entry } from 'C:/Users/logan/Documents/github/TallyUp/htmx-pwa-frontend/app/main.ts';
 
-import Entry from 'C:/Users/logan/Documents/github/TallyUp/htmx-pwa-frontend/app/main.ts';
-registerElement(Entry);
+// // TODO: There are some considerations when force updating the service worker.
+// self.addEventListener('install', (_) => {
+//   self.skipWaiting(); // Forces immediate activation
+//   console.log('Service worker installed');
+// });
 
-// TODO: There are some considerations when force updating the service worker.
-self.addEventListener('install', (_) => {
-  self.skipWaiting(); // Forces immediate activation
-  console.log('Service worker installed');
-});
-
-self.addEventListener('activate', (_) => {
-  clients.claim(); // Takes control of open pages
-  console.log('Service worker activated');
-});
+// self.addEventListener('activate', (_) => {
+//   clients.claim(); // Takes control of open pages
+//   console.log('Service worker activated');
+// });
 
 self.addEventListener('fetch', async (event: FetchEvent) => {
   const { request } = event;
   const method = request.method.toLowerCase() as Action;
-  const pathname = new URL(event.request.url).pathname.toLowerCase();
-  const routeKey = `${method} ${pathname}`;
-  const onTriggered = getRoutes()[routeKey];
+  const { pathname, search } = new URL(request.url);
+
+  if (method === 'get' && pathname === '/') {
+    const file = boilerplate(Entry);
+    event.respondWith(
+      new Response(file, {
+        headers: { 'Content-Type': 'text/html' },
+      }),
+    );
+    return;
+  }
+
+  const routeKey = `${method} ${pathname.toLowerCase()}${search}`;
+  const onTriggered = getRoute(routeKey);
   if (!onTriggered) {
+    console.log(`Forwarding request to network: ${routeKey}`);
     event.respondWith(fetch(request));
     return;
   }
@@ -31,7 +41,6 @@ self.addEventListener('fetch', async (event: FetchEvent) => {
     (async () => {
       try {
         const element = await onTriggered(event);
-        registerElement(element);
         return new Response(renderElement(element), {
           headers: { 'Content-Type': 'text/html' },
         });

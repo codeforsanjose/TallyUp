@@ -1,5 +1,6 @@
 import html from 'html-template-tag';
 import type { Element, ElementTree } from './types';
+import { registerElement } from './routing';
 
 const renderHeaders = (
   headers: Required<Exclude<Element, string>>['behavior']['headers'],
@@ -37,7 +38,9 @@ export const renderElement = (el: ElementTree): string => {
   }
   if (typeof el === 'string') return el;
 
-  const { triggers, resource, values, headers, swap, target } = el.behavior || {};
+  const { triggers, resource, values, headers, swap, target, onTriggered } = el.behavior || {};
+  if (resource && onTriggered) registerElement(resource, onTriggered);
+
   const { id, attrs } = el.shape || {};
   const attrString = attrs?.join(' ') || '';
   const idString = id ? `id=${id} ` : '';
