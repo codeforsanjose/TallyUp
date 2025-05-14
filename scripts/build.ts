@@ -22,7 +22,10 @@ mkdirSync(buildDir, { recursive: true });
 const result = await Bun.build({
   entrypoints: buildCandidates,
   format: 'esm',
-  minify: true,
+  minify: {
+    syntax: true,
+    whitespace: true,
+  },
   naming: '[dir]/[name]/index.mjs',
   outdir: buildDir,
   sourcemap: 'linked',

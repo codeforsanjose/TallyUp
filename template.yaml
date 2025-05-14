@@ -11,6 +11,7 @@ Globals:
       - x86_64
     MemorySize: 128
     Timeout: 100
+    Handler: index.handler
 
 Parameters:
   TallyUpDomainPrefix:
@@ -29,14 +30,13 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./dist/build/loginFunction
-      Handler: loginFunction.handler
       Events:
         ApiEvent:
           Type: HttpApi
           Properties:
             ApiId: !Ref apiMain
             Method: POST
-            Path: /login
+            Path: /api/login
             TimeoutInMillis: 5000
       Policies:
         - AmazonCognitoPowerUser
@@ -47,14 +47,13 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./dist/build/registerFunction
-      Handler: registerFunction.handler
       Events:
         ApiEvent:
           Type: HttpApi
           Properties:
             ApiId: !Ref apiMain
             Method: POST
-            Path: /register
+            Path: /api/register
             TimeoutInMillis: 5000
       Policies:
         - AmazonCognitoPowerUser
@@ -108,6 +107,8 @@ Resources:
       CallbackURLs:
         - https://jwt.io
       DefaultRedirectURI: https://jwt.io
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
       SupportedIdentityProviders:
         - COGNITO
   cognitoUserPoolDomain:
@@ -152,6 +153,7 @@ Resources:
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
             DomainName: !Sub "${apiMain}.execute-api.${AWS::Region}.amazonaws.com"
+            OriginPath: /prod
         Enabled: true
         CacheBehaviors:
           - PathPattern: /api/*
@@ -159,15 +161,18 @@ Resources:
             ViewerProtocolPolicy: redirect-to-https
             OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # CachingDisabled TODO: Set to CachingOptimized when API is ready
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
             - HEAD
-            - OPTIONS
-            - PUT
-            - POST
-            - PATCH
-            - DELETE
           CachedMethods:
             - GET
             - HEAD
