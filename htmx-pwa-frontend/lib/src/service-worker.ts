@@ -3,17 +3,6 @@ import { getRoute } from '../routing';
 import type { Action } from '../types';
 import { Entry } from 'C:/Users/logan/Documents/github/TallyUp/htmx-pwa-frontend/app/main.ts';
 
-// // TODO: There are some considerations when force updating the service worker.
-// self.addEventListener('install', (_) => {
-//   self.skipWaiting(); // Forces immediate activation
-//   console.log('Service worker installed');
-// });
-
-// self.addEventListener('activate', (_) => {
-//   clients.claim(); // Takes control of open pages
-//   console.log('Service worker activated');
-// });
-
 self.addEventListener('fetch', async (event: FetchEvent) => {
   const { request } = event;
   const method = request.method.toLowerCase() as Action;

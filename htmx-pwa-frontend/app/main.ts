@@ -20,10 +20,5 @@ export const Entry: Element = {
 
       return Dashboard(authToken);
     },
-    headers: {
-      // https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-managed-login.html#view-login-pages
-      // @ts-ignore TODO: Really bad hack. Aws wants a redirect after the user logs in. This is for that case.
-      Authorization: () => new URLSearchParams(location.search).get('code') || undefined,
-    },
   },
 };

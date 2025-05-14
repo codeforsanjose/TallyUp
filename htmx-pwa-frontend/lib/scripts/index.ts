@@ -1,7 +1,7 @@
-import path from 'node:path';
-import { boilerplate, type Element } from '..';
 import assert from 'node:assert';
 import fs from 'node:fs/promises';
+import path from 'node:path';
+import { boilerplate } from '..';
 
 // TODO: yargs
 const appPath = path.resolve(__dirname, '../../app/main.ts');
@@ -48,7 +48,7 @@ export const build = async (): Promise<{
   assert(mainJs, 'Main JS build failed');
 
   return {
-    html: boilerplate(entry as Element),
+    html: boilerplate('<p>Loading...</p>'),
     serviceWorker: await serviceWorker,
     mainJs: await mainJs,
   };

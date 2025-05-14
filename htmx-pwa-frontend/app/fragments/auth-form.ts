@@ -6,6 +6,12 @@ export const AuthForm = (state: 'login' | 'register'): Element => {
   return withId((formId) => {
     return {
       type: 'form',
+      behavior: {
+        // triggers: 'submit' (uneeded because it's a form, but I wonder if it's worth enforcing anyway in the future for clarity)
+        resource: { action: 'post', url: `/${state}` },
+        swap: 'none',
+        onTriggered: async (event) => {},
+      },
       shape: {
         children: [
           { type: 'input', shape: { attrs: ['type=email', 'name=email', 'placeholder=Email'] } },
