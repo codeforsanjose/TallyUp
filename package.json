@@ -18,7 +18,8 @@
   },
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "gen-client": "bun run scripts/gen-spec.ts",
+    "build:frontend": "bun run scripts/build-frontend.ts",
+    "gen-spec": "bun run scripts/gen-spec.ts",
     "format": "bun run prettier --write ."
   },
   "jest": {

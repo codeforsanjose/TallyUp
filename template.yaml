@@ -145,13 +145,13 @@ Resources:
     Properties:
       Bucket: !Ref indexDotHtml
       PolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
-            Principal: "*"
+            Principal: '*'
             Action:
               - s3:GetObject
-            Resource: !Sub "arn:${AWS::Partition}:s3:::${indexDotHtml}/*"
+            Resource: !Sub 'arn:${AWS::Partition}:s3:::${indexDotHtml}/*'
   cloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -160,11 +160,11 @@ Resources:
           - Id: indexDotHtml
             CustomOriginConfig:
               OriginProtocolPolicy: http-only
-            DomainName: !Sub "${indexDotHtml}.s3-website-${AWS::Region}.amazonaws.com"
+            DomainName: !Sub '${indexDotHtml}.s3-website-${AWS::Region}.amazonaws.com'
           - Id: apiMain
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
-            DomainName: !Sub "${apiMain}.execute-api.${AWS::Region}.amazonaws.com"
+            DomainName: !Sub '${apiMain}.execute-api.${AWS::Region}.amazonaws.com'
             OriginPath: /prod
         Enabled: true
         CacheBehaviors:
@@ -206,4 +206,4 @@ Outputs:
     Value: !GetAtt cloudfrontDistribution.DomainName
   TallyUpDomain:
     Description: Domain for Tally Up
-    Value: !Sub "https://${TallyUpDomainPrefix}.auth.${AWS::Region}.amazoncognito.com"
+    Value: !Sub 'https://${TallyUpDomainPrefix}.auth.${AWS::Region}.amazoncognito.com'
