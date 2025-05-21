@@ -1,38 +1,24 @@
-import html from 'html-template-tag';
-import type { Element } from '../types';
+import type { Element } from '../lib/types';
+import { Dashboard, LoginForm } from './fragments';
+import { user } from './idb';
 
 export const Entry: Element = {
   type: 'main',
   behavior: {
     resource: { action: 'get', url: '/page-content' },
     triggers: 'load',
-    onTriggered: async (event): Promise<Element | Response> => {
-      const bearer = event.request.headers.get('Authorization');
-      if (!bearer) {
-        return new Response(
-          html`
-            <a
-              href="https://tallyup-pool.auth.us-west-2.amazoncognito.com/login?client_id=4l3vcqdt5gquj6a91gklltpmce&response_type=code&scope=email+openid&redirect_uri=https%3A%2F%2Fjwt.io"
-            >
-              Wingo Dingo
-            </a>
-          `,
-          {
-            headers: { 'Content-Type': 'text/html' },
-          },
-        );
+    onTriggered: async (event): Promise<Element> => {
+      const authToken = event.request.headers.get('Authorization')?.split('Bearer ')[1];
+      if (!authToken) {
+        const { authToken } = (await user.get()) || {};
+        if (!authToken) {
+          return LoginForm();
+        }
+
+        return Dashboard(authToken);
       }
 
-      return {
-        type: 'div',
-        shape: {
-          attrs: ['hx-swap="outerHTML"'],
-          children: [
-            { type: 'h1', shape: { children: ["If you're here, signin worked."] } },
-            { type: 'p', shape: { children: ['Yay'] } },
-          ],
-        },
-      };
+      return Dashboard(authToken);
     },
   },
 };

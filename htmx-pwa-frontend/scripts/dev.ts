@@ -19,10 +19,8 @@ const server = Bun.serve({
       return new Response(mainJs, {
         headers: { 'Content-Type': 'application/javascript' },
       });
-    } else if (pathname === '/favicon.ico') {
-      return new Response(null, { status: 404 });
     }
-    return new Response(null, { status: 404 });
+    return new Response('Not Found', { status: 404, statusText: 'Not Found' });
   },
 });
 

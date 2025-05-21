@@ -1,4 +1,4 @@
-import type { Element } from '../types';
+import type { Element } from './types';
 import { renderElement } from './render-element';
 
 export const boilerplate = (entry: Element): string => /* html */ `
