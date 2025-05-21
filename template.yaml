@@ -26,6 +26,18 @@ Resources:
       Description: API for Tally Up
       StageName: prod
       FailOnWarnings: true
+  openApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./dist/build/openApiFunction
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: GET
+            Path: /api/openapi.yaml
+            TimeoutInMillis: 5000
   loginFunction:
     Type: AWS::Serverless::Function
     Properties:

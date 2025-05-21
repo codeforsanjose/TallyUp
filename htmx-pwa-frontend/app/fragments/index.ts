@@ -1,3 +1,4 @@
 export * from './dashboard';
 export * from './error-popup';
-export * from './auth-form';
+export * from './login-form';
+export * from './register-form';

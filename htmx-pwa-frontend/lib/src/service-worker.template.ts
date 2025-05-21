@@ -3,6 +3,14 @@ import { getRoute } from '../routing';
 import type { Action } from '../types';
 // __IMPORT_ENTRY_HERE__
 
+self.addEventListener('install', (event: ExtendableEvent) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event: ExtendableEvent) => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener('fetch', async (event: FetchEvent) => {
   const { request } = event;
   const method = request.method.toLowerCase() as Action;
@@ -30,6 +38,7 @@ self.addEventListener('fetch', async (event: FetchEvent) => {
     (async () => {
       try {
         const element = await onTriggered(event);
+        console.log(`Rendering element for route: ${routeKey}`, element);
         return new Response(renderElement(element), {
           headers: { 'Content-Type': 'text/html' },
         });

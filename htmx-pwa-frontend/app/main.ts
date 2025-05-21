@@ -1,5 +1,5 @@
 import type { Element } from '../lib/types';
-import { AuthForm, Dashboard } from './fragments';
+import { Dashboard, LoginForm } from './fragments';
 import { user } from './idb';
 
 export const Entry: Element = {
@@ -12,7 +12,7 @@ export const Entry: Element = {
       if (!authToken) {
         const { authToken } = (await user.get()) || {};
         if (!authToken) {
-          return AuthForm('login');
+          return LoginForm();
         }
 
         return Dashboard(authToken);

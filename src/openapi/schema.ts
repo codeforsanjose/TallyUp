@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BaseResponseModel } from './base-response';
 
 export const AuthRequestModel = z.object({
   email: z
@@ -15,12 +16,6 @@ export const AuthRequestModel = z.object({
 });
 
 export type AuthRequest = z.infer<typeof AuthRequestModel>;
-
-export const BaseResponseModel = z.object({
-  message: z.string().min(1, 'message is required'),
-});
-
-export type BaseResponse = z.infer<typeof BaseResponseModel>;
 
 export const AuthResponseModel = BaseResponseModel.extend({
   accessToken: z.string().optional(),

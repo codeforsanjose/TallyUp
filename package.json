@@ -7,27 +7,18 @@
     "@aws-sdk/client-cognito-identity-provider": "^3.799.0",
     "@aws-sdk/client-dynamodb": "^3.398.0",
     "@aws-sdk/lib-dynamodb": "^3.398.0",
-    "@hey-api/client-fetch": "^0.10.0",
-    "bcryptjs": "^3.0.2",
-    "htmx.org": "^2.0.4",
-    "jsonwebtoken": "^9.0.2",
     "zod": "^3.24.3"
   },
   "devDependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",
-    "@aws-sdk/client-s3": "^3.808.0",
-    "@aws-sdk/lib-storage": "^3.808.0",
     "@types/aws-lambda": "^8.10.149",
     "@types/bun": "^1.2.10",
-    "@types/jsonwebtoken": "^9.0.9",
-    "aws-sdk-client-mock": "^2.0.0",
-    "jest": "^29.2.1",
     "prettier": "^3.5.3",
     "yaml": "^2.7.1"
   },
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "gen-client": "bun run scripts/gen-client.ts",
+    "gen-client": "bun run scripts/gen-spec.ts",
     "format": "bun run prettier --write ."
   },
   "jest": {

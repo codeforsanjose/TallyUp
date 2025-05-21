@@ -1,6 +1,8 @@
 import html from 'html-template-tag';
-import type { Element, ElementTree } from './types';
-import { registerElement } from './routing';
+import type { Element, ElementTree } from '../types';
+import { registerElement } from '../routing';
+import { renderResource } from './render-resource';
+import { renderTriggers } from './render-triggers';
 
 const renderHeaders = (
   headers: Required<Exclude<Element, string>>['behavior']['headers'],
@@ -38,7 +40,7 @@ export const renderElement = (el: ElementTree): string => {
   }
   if (typeof el === 'string') return el;
 
-  const { triggers, resource, values, headers, swap, target, onTriggered } = el.behavior || {};
+  const { resource, values, headers, swap, target, onTriggered } = el.behavior || {};
   if (resource && onTriggered) registerElement(resource, onTriggered);
 
   const { id, attrs } = el.shape || {};
@@ -46,12 +48,8 @@ export const renderElement = (el: ElementTree): string => {
   const idString = id ? `id=${id} ` : '';
 
   // TODO: const renderTriggers = (triggers: string | string[]) => {
-  const triggerString = !triggers
-    ? ''
-    : Array.isArray(triggers)
-      ? `hx-trigger=${triggers.join(', ')} `
-      : `hx-trigger=${triggers} `;
-  const resourceString = !resource ? '' : `hx-${resource.action}=${resource.url} `;
+  const triggerString = renderTriggers(el);
+  const resourceString = renderResource(el);
   const swapString = !swap ? '' : `hx-swap=${swap} `;
   const headersString = renderHeaders(headers);
   const targetString = target ? `hx-target=${target} ` : '';

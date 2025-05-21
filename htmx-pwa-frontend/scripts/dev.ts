@@ -20,7 +20,7 @@ const server = Bun.serve({
         headers: { 'Content-Type': 'application/javascript' },
       });
     }
-    return new Response(null, { status: 404 });
+    return new Response('Not Found', { status: 404, statusText: 'Not Found' });
   },
 });
 

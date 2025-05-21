@@ -5,9 +5,9 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.67.0",
     "@types/bun": "latest",
-    "@types/serviceworker": "^0.0.132"
+    "@types/serviceworker": "^0.0.132",
+    "openapi-typescript": "^7.8.0"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -17,6 +17,6 @@
   },
   "scripts": {
     "dev": "bun run scripts/dev.ts",
-    "postinstall": "bunx @hey-api/openapi-ts -i ../openapi.yaml -o client -c @hey-api/client-fetch"
+    "gen-client": "bunx @hey-api/openapi-ts -i ../openapi.yaml -o client -c @hey-api/client-fetch"
   }
 }
