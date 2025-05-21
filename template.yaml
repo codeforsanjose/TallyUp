@@ -11,7 +11,7 @@ Globals:
       - x86_64
     MemorySize: 128
     Timeout: 100
-    CodeUri: ./ # Not the function source code, but the location of the Makefile
+    Handler: index.handler
 
 Parameters:
   TallyUpDomainPrefix:
@@ -26,34 +26,52 @@ Resources:
       Description: API for Tally Up
       StageName: prod
       FailOnWarnings: true
+  openApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./dist/build/openApiFunction
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: GET
+            Path: /api/openapi.yaml
+            TimeoutInMillis: 5000
   loginFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: loginFunction.handler
+      CodeUri: ./dist/build/loginFunction
       Events:
         ApiEvent:
           Type: HttpApi
           Properties:
             ApiId: !Ref apiMain
             Method: POST
-            Path: /login
+            Path: /api/login
             TimeoutInMillis: 5000
-    Metadata:
-      BuildMethod: makefile
+      Policies:
+        - AmazonCognitoPowerUser
+      Environment:
+        Variables:
+          USER_POOL_CLIENT_ID: !Ref cognitoUserPoolClient
   registerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: registerFunction.handler
+      CodeUri: ./dist/build/registerFunction
       Events:
         ApiEvent:
           Type: HttpApi
           Properties:
             ApiId: !Ref apiMain
             Method: POST
-            Path: /register
+            Path: /api/register
             TimeoutInMillis: 5000
-    Metadata:
-      BuildMethod: makefile
+      Policies:
+        - AmazonCognitoPowerUser
+      Environment:
+        Variables:
+          USER_POOL_CLIENT_ID: !Ref cognitoUserPoolClient
   cognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -101,6 +119,8 @@ Resources:
       CallbackURLs:
         - https://jwt.io
       DefaultRedirectURI: https://jwt.io
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
       SupportedIdentityProviders:
         - COGNITO
   cognitoUserPoolDomain:
@@ -140,8 +160,27 @@ Resources:
           - Id: indexDotHtml
             CustomOriginConfig:
               OriginProtocolPolicy: http-only
-            DomainName: !Sub '${indexDotHtml}.s3-website.${AWS::Region}.amazonaws.com'
+            DomainName: !Sub '${indexDotHtml}.s3-website-${AWS::Region}.amazonaws.com'
+          - Id: apiMain
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+            DomainName: !Sub '${apiMain}.execute-api.${AWS::Region}.amazonaws.com'
+            OriginPath: /prod
         Enabled: true
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: apiMain
+            ViewerProtocolPolicy: redirect-to-https
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad # CachingDisabled TODO: Set to CachingOptimized when API is ready
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
@@ -152,7 +191,9 @@ Resources:
           TargetOriginId: indexDotHtml
           ViewerProtocolPolicy: redirect-to-https
           Compress: true
-          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # CachingOptimized
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
+        PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
 
