@@ -1,9 +1,9 @@
-import { $, component$, useSignal } from '@builder.io/qwik';
+import { $, component$, useSignal, type Signal } from '@builder.io/qwik';
 
 import { LoginForm, RegisterForm } from './components';
 
 export const App = component$(() => {
-  const form = useSignal('login');
+  const form: Signal<'login' | 'register'> = useSignal('login');
 
   const onFormChange = $(() => {
     form.value = form.value === 'login' ? 'register' : 'login';

@@ -14,7 +14,8 @@
     "openapi-typescript": "^7.8.0",
     "serve": "^14.2.4",
     "typescript": "~5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vite-plugin-pwa": "^1.0.0"
   },
   "dependencies": {
     "@builder.io/qwik": "^1.13.0",
