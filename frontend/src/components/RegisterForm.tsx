@@ -1,4 +1,5 @@
 import { $, component$, type QRLEventHandlerMulti, useSignal } from '@builder.io/qwik';
+import { client, postRegister } from '../client';
 
 export const RegisterForm = component$(() => {
   const email = useSignal('');
@@ -6,21 +7,19 @@ export const RegisterForm = component$(() => {
   const error = useSignal('');
 
   const onSubmit = $<QRLEventHandlerMulti<SubmitEvent, HTMLFormElement>>(async () => {
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const res = await postRegister({
+      client,
+      body: {
         email: email.value,
         password: password.value,
-      }),
+      },
     });
-    if (!res.ok) {
-      const data = await res.json();
-      error.value = data.error;
+
+    if (res.error) {
+      error.value = res.error.message || 'An error occurred during registration.';
     }
-    console.log('Register response:', res);
+
+    console.log('Registration response:', res);
   });
 
   return (

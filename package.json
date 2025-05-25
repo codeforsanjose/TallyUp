@@ -18,7 +18,8 @@
   },
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "build:frontend": "bun run scripts/build-frontend.ts",
+    "build-frontend": "bun run scripts/build-frontend.ts",
+    "deploy": "bun run scripts/deploy.ts",
     "gen-spec": "bun run scripts/gen-spec.ts",
     "format": "bun run prettier --write ."
   },

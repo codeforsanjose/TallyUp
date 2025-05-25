@@ -1,18 +1,20 @@
 import { $, component$, useSignal, type QRLEventHandlerMulti } from '@builder.io/qwik';
-import { client } from '../client';
-
+import { client, postLogin } from '../client';
 export const LoginForm = component$(() => {
   const email = useSignal('');
   const password = useSignal('');
   const error = useSignal('');
 
   const onSubmit = $<QRLEventHandlerMulti<SubmitEvent, HTMLFormElement>>(async () => {
-    const res = await client.postLogin({
-      email: email.value,
-      password: password.value,
+    const res = await postLogin({
+      client,
+      body: {
+        email: email.value,
+        password: password.value,
+      },
     });
-    if (!res.ok) {
-      error.value = res.error;
+    if (res.error) {
+      error.value = res.error.message || 'An error occurred during login.';
     }
 
     console.log('Login response:', res);

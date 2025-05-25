@@ -92,11 +92,6 @@ export const generateOpenApiSpec = async (): Promise<string> => {
       version: '0.0.1',
       description: 'Tally Up API',
     },
-    servers: [
-      {
-        url: 'https://d3cwt10eg0ejzb.cloudfront.net/api',
-      },
-    ],
   });
 
   return stringify(result);

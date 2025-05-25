@@ -54,7 +54,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         changeOrigin: true,
-        target: 'https://d3cwt10eg0ejzb.cloudfront.net',
+        target: 'http://localhost:3000',
         secure: false,
       },
     },
