@@ -1,23 +1,33 @@
 import { $, component$, useSignal, type QRLEventHandlerMulti } from '@builder.io/qwik';
-import { client, postLogin } from '../client';
+import { postLogin } from '../client';
 export const LoginForm = component$(() => {
   const email = useSignal('');
   const password = useSignal('');
-  const error = useSignal('');
+  const status = useSignal({
+    message: '',
+    type: 'info' as 'info' | 'success' | 'error',
+  });
 
   const onSubmit = $<QRLEventHandlerMulti<SubmitEvent, HTMLFormElement>>(async () => {
     const res = await postLogin({
-      client,
       body: {
         email: email.value,
         password: password.value,
       },
     });
     if (res.error) {
-      error.value = res.error.message || 'An error occurred during login.';
+      status.value = {
+        message: res.error.message || 'Login failed',
+        type: 'error',
+      };
+      console.error('Login error:', res.error);
+      return;
     }
 
-    console.log('Login response:', res);
+    status.value = {
+      message: 'Login successful',
+      type: 'success',
+    };
   });
   return (
     <section>
@@ -49,7 +59,19 @@ export const LoginForm = component$(() => {
           Login
         </button>
       </form>
-      {error.value && <p class='text-red-500'>{error.value}</p>}
+      {status.value.message && (
+        <div
+          class={`mt-4 p-2 rounded ${
+            status.value.type === 'success'
+              ? 'bg-green-100 text-green-800'
+              : status.value.type === 'error'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-blue-100 text-blue-800'
+          }`}
+        >
+          {status.value.message}
+        </div>
+      )}
     </section>
   );
 });

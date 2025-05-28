@@ -50,13 +50,13 @@ export default defineConfig({
       },
     }),
   ],
-  server: {
-    proxy: {
-      '/api': {
-        changeOrigin: true,
-        target: 'http://localhost:3000',
-        secure: false,
-      },
-    },
-  },
+  // server: {
+  //   proxy: {
+  //     '/api': {
+  //       changeOrigin: true,
+  //       target: 'http://localhost:3000',
+  //       secure: false,
+  //     },
+  //   },
+  // },
 });

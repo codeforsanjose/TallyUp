@@ -1,14 +1,16 @@
 import { $, component$, type QRLEventHandlerMulti, useSignal } from '@builder.io/qwik';
-import { client, postRegister } from '../client';
+import { postRegister } from '../client';
 
 export const RegisterForm = component$(() => {
   const email = useSignal('');
   const password = useSignal('');
-  const error = useSignal('');
+  const status = useSignal({
+    message: '',
+    type: 'info' as 'info' | 'success' | 'error',
+  });
 
   const onSubmit = $<QRLEventHandlerMulti<SubmitEvent, HTMLFormElement>>(async () => {
     const res = await postRegister({
-      client,
       body: {
         email: email.value,
         password: password.value,
@@ -16,10 +18,18 @@ export const RegisterForm = component$(() => {
     });
 
     if (res.error) {
-      error.value = res.error.message || 'An error occurred during registration.';
+      status.value = {
+        message: res.error.message || 'Registration failed',
+        type: 'error',
+      };
+      console.error('Registration error:', res.error);
+      return;
     }
 
-    console.log('Registration response:', res);
+    status.value = {
+      message: 'Registration successful',
+      type: 'success',
+    };
   });
 
   return (
@@ -54,7 +64,19 @@ export const RegisterForm = component$(() => {
           Register
         </button>
       </form>
-      {error.value && <p class='text-red-500'>{error.value}</p>}
+      {status.value.message && (
+        <div
+          class={`mt-4 p-2 rounded ${
+            status.value.type === 'success'
+              ? 'bg-green-100 text-green-800'
+              : status.value.type === 'error'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-blue-100 text-blue-800'
+          }`}
+        >
+          {status.value.message}
+        </div>
+      )}
     </section>
   );
 });
