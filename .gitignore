@@ -131,3 +131,6 @@ dist
 
 .aws-sam/
 openapi.yaml
+
+# Temporarily ignore the following files until they are properly handled
+src/dynamo
