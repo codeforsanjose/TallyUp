@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      retries: 5
+      start_period: 30s
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    pull_policy: build
+    command: ['bun', 'dev']
+    environment:
+      - DATABASE_URL='postgres://postgres@db:5432/postgres'
+  # frontend:
+  #   image: tallyup-proj:latest
+  #   depends_on:
+  #     - api
+  #   ports:
+  #     - '5173:5173'
+  #   command: ['bun', 'dev']
+  #   pull_policy: never

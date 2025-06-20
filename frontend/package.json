@@ -3,8 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "scripts/build.ts",
   "scripts": {
-    "build": "tsc -b && vite build",
+    "build": "bun run scripts/build.ts",
     "dev": "vite",
     "gen-client": "bun run scripts/gen-client.ts -- --reschema",
     "postinstall": "bun run gen-client"
@@ -13,13 +14,17 @@
     "@hey-api/client-fetch": "^0.10.2",
     "@hey-api/openapi-ts": "^0.67.6",
     "@tailwindcss/vite": "^4.1.7",
+    "@types/yargs": "^17.0.33",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
     "vite-plugin-pwa": "^1.0.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17"
   },
   "dependencies": {
     "@builder.io/qwik": "^1.13.0",
     "tailwindcss": "^4.1.7"
-  }
+  },
+  "trustedDependencies": [
+    "@tailwindcss/oxide"
+  ]
 }

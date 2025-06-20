@@ -4,7 +4,7 @@ import path from 'path';
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 
-const openapiPath = path.resolve(__dirname, '../../openapi.yaml');
+const openapiPath = path.resolve(__dirname, '../../../openapi.yaml');
 const clientOutputPath = path.resolve(__dirname, '../src/client');
 
 if (import.meta.main) {
@@ -20,9 +20,9 @@ if (import.meta.main) {
       default: false,
     })
     .parse();
-  const { reschema } = argv;
+  const { reschema, verbose } = argv;
 
-  await generateAPIClient();
+  await generateAPIClient({ reschema, verbose });
 }
 
 export type GenerateAPIClientOptions = {
@@ -66,5 +66,8 @@ export default async function generateAPIClient(opts?: GenerateAPIClientOptions)
         runtimeConfigPath: './src/dev-utils/heyapi-config.ts', // TODO: When I wrote this, path.resolve was not working correctly
       },
     ],
+    logs: {
+      level: verbose ? 'info' : 'error',
+    },
   });
 }

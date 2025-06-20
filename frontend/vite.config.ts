@@ -1,10 +1,10 @@
-import { defineConfig } from 'vite';
 import { qwikVite } from '@builder.io/qwik/optimizer';
 import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-
 // https://vite.dev/config/
 export default defineConfig({
+  root: __dirname,
   plugins: [
     qwikVite({
       csr: true,
@@ -50,13 +50,4 @@ export default defineConfig({
       },
     }),
   ],
-  // server: {
-  //   proxy: {
-  //     '/api': {
-  //       changeOrigin: true,
-  //       target: 'http://localhost:3000',
-  //       secure: false,
-  //     },
-  //   },
-  // },
 });

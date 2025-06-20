@@ -1,1 +1,3 @@
-export type Result<T> = { success: true; data: T } | { success: false; error: Error };
+export type Result<T> = Success<T> | { success: false; error: Error };
+
+export type Success<T> = T extends void ? { success: true } : { success: true; data: T };
