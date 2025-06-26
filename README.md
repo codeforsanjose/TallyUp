@@ -14,7 +14,8 @@ Evolved MealTally repo to tally and track handouts of any sort to people in need
 - Run `sam local invoke {{functionName}}` to invoke a function locally
 - After making a change to `openapi.yaml`, run `bun run postinstall` to update the API client
 
-## Semantic Html
+## Large Texts
 
 - [MDN Web Docs](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Accessibility/HTML)
 - [WAI](https://www.w3.org/WAI/standards-guidelines/aria/)
+- [AWS Aurora DSQL](https://docs.aws.amazon.com/pdfs/aurora-dsql/latest/userguide/aurora-dsql-ug.pdf)

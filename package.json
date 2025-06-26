@@ -6,21 +6,30 @@
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.799.0",
     "@aws-sdk/client-dynamodb": "^3.398.0",
+    "@aws-sdk/dsql-signer": "^3.835.0",
     "@aws-sdk/lib-dynamodb": "^3.398.0",
+    "yaml": "^2.8.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "@aws-sdk/client-cloudformation": "^3.835.0",
+    "@aws-sdk/client-lambda": "^3.835.0",
+    "@aws-sdk/credential-provider-ini": "^3.835.0",
+    "@aws-sdk/credential-providers": "^3.835.0",
+    "@aws-sdk/types": "^3.821.0",
     "@types/aws-lambda": "^8.10.149",
     "@types/bun": "^1.2.10",
+    "@types/yargs": "^17.0.33",
+    "drizzle-kit": "^0.31.2",
     "frontend": "workspace:*",
     "prettier": "^3.5.3",
-    "yaml": "^2.7.1"
+    "yargs": "^17"
   },
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "build-frontend": "bun run scripts/build-frontend.ts",
-    "deploy": "bun run scripts/deploy.ts",
+    "deploy": "bun run scripts/deploy",
+    "gen-migrations": "drizzle-kit generate",
     "gen-spec": "bun run scripts/gen-spec.ts",
     "format": "bun run prettier --write ."
   },

@@ -12,6 +12,9 @@ Globals:
     MemorySize: 128
     Timeout: 100
     Handler: index.handler
+    Environment:
+      Variables:
+        CLUSTER_ENDPOINT: !Sub "${db}.dsql.${AWS::Region}.on.aws"
 
 Parameters:
   TallyUpDomainPrefix:
@@ -50,11 +53,6 @@ Resources:
             Method: POST
             Path: /api/login
             TimeoutInMillis: 5000
-      Policies:
-        - AmazonCognitoPowerUser
-      Environment:
-        Variables:
-          USER_POOL_CLIENT_ID: !Ref cognitoUserPoolClient
   registerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -67,68 +65,6 @@ Resources:
             Method: POST
             Path: /api/register
             TimeoutInMillis: 5000
-      Policies:
-        - AmazonCognitoPowerUser
-      Environment:
-        Variables:
-          USER_POOL_CLIENT_ID: !Ref cognitoUserPoolClient
-  cognitoUserPool:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      AccountRecoverySetting:
-        RecoveryMechanisms:
-          - Name: verified_email
-            Priority: 1
-      AutoVerifiedAttributes:
-        - email
-      DeletionProtection: INACTIVE # TODO: Set to ACTIVE in production
-      EmailConfiguration:
-        EmailSendingAccount: COGNITO_DEFAULT # TODO: Set to DEVELOPER when domain is verified
-      Policies:
-        PasswordPolicy:
-          MinimumLength: 8
-          RequireLowercase: true
-          RequireNumbers: true
-          RequireSymbols: true
-          RequireUppercase: true
-      Schema:
-        - Name: email
-          Required: true
-          Mutable: true
-      UserAttributeUpdateSettings:
-        AttributesRequireVerificationBeforeUpdate:
-          - email
-      UsernameAttributes:
-        - email
-      UsernameConfiguration:
-        CaseSensitive: false
-      UserPoolName: tally-up-user-pool
-      VerificationMessageTemplate:
-        DefaultEmailOption: CONFIRM_WITH_LINK
-      UserPoolTier: LITE # https://github.com/aws/serverless-application-model/issues/3726
-  cognitoUserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      UserPoolId: !Ref cognitoUserPool
-      AllowedOAuthFlowsUserPoolClient: true
-      AllowedOAuthFlows:
-        - code
-      AllowedOAuthScopes:
-        - email
-        - openid
-      CallbackURLs:
-        - https://jwt.io
-      DefaultRedirectURI: https://jwt.io
-      ExplicitAuthFlows:
-        - ALLOW_USER_PASSWORD_AUTH
-      SupportedIdentityProviders:
-        - COGNITO
-  cognitoUserPoolDomain:
-    Type: AWS::Cognito::UserPoolDomain
-    Properties:
-      Domain: !Ref TallyUpDomainPrefix
-      UserPoolId: !Ref cognitoUserPool
-      ManagedLoginVersion: 1 # https://github.com/aws/serverless-application-model/issues/3726 basically this issue but for all of cognito
   indexDotHtml:
     Type: AWS::S3::Bucket
     Properties:
@@ -145,13 +81,13 @@ Resources:
     Properties:
       Bucket: !Ref indexDotHtml
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Principal: '*'
+            Principal: "*"
             Action:
               - s3:GetObject
-            Resource: !Sub 'arn:${AWS::Partition}:s3:::${indexDotHtml}/*'
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${indexDotHtml}/*"
   cloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -160,11 +96,11 @@ Resources:
           - Id: indexDotHtml
             CustomOriginConfig:
               OriginProtocolPolicy: http-only
-            DomainName: !Sub '${indexDotHtml}.s3-website-${AWS::Region}.amazonaws.com'
+            DomainName: !Sub "${indexDotHtml}.s3-website-${AWS::Region}.amazonaws.com"
           - Id: apiMain
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
-            DomainName: !Sub '${apiMain}.execute-api.${AWS::Region}.amazonaws.com'
+            DomainName: !Sub "${apiMain}.execute-api.${AWS::Region}.amazonaws.com"
             OriginPath: /prod
         Enabled: true
         CacheBehaviors:
@@ -196,7 +132,31 @@ Resources:
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-
+  db:
+    Type: AWS::DSQL::Cluster
+    Properties:
+      DeletionProtectionEnabled: false # TODO: Set to true in production
+  dbConnectRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: sts:AssumeRole
+            Condition:
+              ArnLike:
+                lambda:SourceFunctionArn: "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-*" # TODO: Don't hardcode tally-up-backend
+      Policies:
+        - PolicyName: dbConnectPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dsql:DbConnect
+                Resource: !Ref db
 Outputs:
   S3BucketName:
     Description: S3 bucket name for index.html
@@ -206,4 +166,4 @@ Outputs:
     Value: !GetAtt cloudfrontDistribution.DomainName
   TallyUpDomain:
     Description: Domain for Tally Up
-    Value: !Sub 'https://${TallyUpDomainPrefix}.auth.${AWS::Region}.amazoncognito.com'
+    Value: !Sub "https://${TallyUpDomainPrefix}.auth.${AWS::Region}.amazoncognito.com"
