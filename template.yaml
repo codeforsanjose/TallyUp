@@ -12,9 +12,6 @@ Globals:
     MemorySize: 128
     Timeout: 100
     Handler: index.handler
-    Environment:
-      Variables:
-        CLUSTER_ENDPOINT: !Sub "${db}.dsql.${AWS::Region}.on.aws"
 
 Parameters:
   TallyUpDomainPrefix:
@@ -132,31 +129,12 @@ Resources:
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-  db:
-    Type: AWS::DSQL::Cluster
+  neonConnectionSecret:
+    Type: AWS::SecretsManager::Secret
     Properties:
-      DeletionProtectionEnabled: false # TODO: Set to true in production
-  dbConnectRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal: "*"
-            Action: sts:AssumeRole
-            Condition:
-              ArnLike:
-                lambda:SourceFunctionArn: "arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-*" # TODO: Don't hardcode tally-up-backend
-      Policies:
-        - PolicyName: dbConnectPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dsql:DbConnect
-                Resource: !Ref db
+      Description: Connection string for Neon database
+      Name: neon-connection-string
+
 Outputs:
   S3BucketName:
     Description: S3 bucket name for index.html

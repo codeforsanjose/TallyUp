@@ -1,11 +1,11 @@
-import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import type { BaseResponse } from '../openapi';
+import type { APIGatewayProxyResult } from 'aws-lambda';
+import type { BaseResponse } from './openapi';
 
 export const buildResponse = <T extends BaseResponse>(
   statusCode: number,
   body: T,
   headers?: Record<string, string>,
-): APIGatewayProxyStructuredResultV2 => {
+): APIGatewayProxyResult => {
   return {
     statusCode,
     body: JSON.stringify(body),

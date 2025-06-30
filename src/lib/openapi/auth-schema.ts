@@ -17,16 +17,14 @@ export const AuthRequestModel = z.object({
 
 export type AuthRequest = z.infer<typeof AuthRequestModel>;
 
-export const AuthResponseModel = BaseResponseModel.extend({
-  accessToken: z.string().optional(),
-  idToken: z.string().optional(),
+export const LoginResponseModel = BaseResponseModel.extend({
   refreshToken: z.string().optional(),
 });
 
-export type AuthResponse = z.infer<typeof AuthResponseModel>;
+export type LoginResponse = z.infer<typeof LoginResponseModel>;
 
 export const RegisterResponseModel = BaseResponseModel.extend({
-  userId: z.string(),
+  userId: z.number(),
 });
 
 export type RegisterResponse = z.infer<typeof RegisterResponseModel>;

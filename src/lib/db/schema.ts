@@ -1,9 +1,13 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import { integer, pgEnum, pgTable, text } from 'drizzle-orm/pg-core';
+
+export const userStatus = pgEnum('user_status', ['active', 'pending', 'suspended']);
+
 export const users = pgTable('users', {
-  id: uuid().primaryKey().defaultRandom(),
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
   email: text().notNull().unique(),
   passwordHash: text().notNull(),
+  status: userStatus().notNull(),
 });
 
 export const usersRelation = relations(users, ({ many }) => ({
@@ -11,8 +15,10 @@ export const usersRelation = relations(users, ({ many }) => ({
 }));
 
 export const sessions = pgTable('sessions', {
-  id: uuid().primaryKey().defaultRandom(),
-  userId: text().notNull(),
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer()
+    .notNull()
+    .references(() => users.id),
   nextRefreshToken: text().notNull(),
 });
 

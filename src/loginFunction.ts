@@ -1,33 +1,55 @@
-import type { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
-import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import assert from 'node:assert';
-import { client, userPool } from './cognito';
-import { buildResponse } from './lib';
-import { AuthRequestModel, type AuthResponse } from './openapi';
-import { safeParse } from './lib/safe-parse';
+import { verifySync } from '@node-rs/argon2';
+import { buildHttpHandler, envDependencyStrategy, type Action, type EnvDependency } from './lib';
+import { signJwtToken } from './lib/auth';
+import { withDrizzle, type DrizzleDep } from './lib/db';
+import { AuthRequestModel, type AuthRequest, type LoginResponse } from './lib/openapi';
 
-export const builder =
-  (client: CognitoIdentityProviderClient, env: { poolClientId: string }) =>
-  async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> => {
-    // Validate
-    if (!event.body) return buildResponse(400, { message: 'Request body is required' });
-    const parseResult = safeParse(AuthRequestModel, event.body);
-    if (!parseResult.success)
-      return buildResponse(400, { message: `Invalid request body: ${parseResult.error}` });
+type LoginEnv = {
+  RDS_SECRET_ARN: string;
+  RDS_RESOURCE_ARN: string;
+  JWT_SECRET_KEY: string;
+};
 
-    // Try
-    const result = await userPool.login({
-      client,
-      poolClientId: env.poolClientId,
-      USERNAME: parseResult.data.email,
-      PASSWORD: parseResult.data.password,
-    });
-    if (!result.success) return buildResponse(400, { message: result.error.message });
+const login: Action<AuthRequest, LoginResponse, DrizzleDep & EnvDependency<LoginEnv>> = async (
+  data,
+  { drizzle, env },
+) => {
+  const { email, password } = data;
+  const { JWT_SECRET_KEY: jwtKey } = env;
 
-    return buildResponse<AuthResponse>(200, result.data);
+  // Get user by email
+  const user = await drizzle.query.users.findFirst({
+    where: (users, { eq }) => eq(users.email, email),
+    columns: {
+      id: true,
+      passwordHash: true,
+      status: true,
+    },
+  });
+  if (!user) return { success: false, error: new Error('User not found') };
+  const { id: userId, passwordHash, status } = user;
+  if (status !== 'active') return { success: false, error: new Error('User is not active') };
+
+  // Verify password
+  const isPasswordValid = verifySync(password, passwordHash);
+  if (!isPasswordValid) {
+    return { success: false, error: new Error('Invalid email or password') };
+  }
+
+  const refreshToken = signJwtToken({ userId, jwtKey });
+  return {
+    success: true,
+    data: {
+      message: 'Login successful',
+      refreshToken,
+    },
   };
+};
 
-assert(process.env['USER_POOL_CLIENT_ID'], 'USER_POOL_CLIENT_ID is not set');
-export const handler = builder(client, {
-  poolClientId: process.env['USER_POOL_CLIENT_ID'],
-});
+export const handler = buildHttpHandler(AuthRequestModel, login, [
+  withDrizzle(envDependencyStrategy(['SECRET_DB_URL'], process.env)),
+  envDependencyStrategy<LoginEnv>(
+    ['JWT_SECRET_KEY', 'RDS_RESOURCE_ARN', 'RDS_SECRET_ARN'],
+    process.env,
+  ),
+]);

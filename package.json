@@ -4,10 +4,12 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.799.0",
-    "@aws-sdk/client-dynamodb": "^3.398.0",
+    "@aws-sdk/client-ses": "^3.839.0",
     "@aws-sdk/dsql-signer": "^3.835.0",
-    "@aws-sdk/lib-dynamodb": "^3.398.0",
+    "@neondatabase/serverless": "^1.0.1",
+    "@node-rs/argon2": "^2.0.2",
+    "drizzle-orm": "^0.44.2",
+    "jsonwebtoken": "^9.0.2",
     "yaml": "^2.8.0",
     "zod": "^3.24.3"
   },
@@ -20,8 +22,10 @@
     "@aws-sdk/types": "^3.821.0",
     "@types/aws-lambda": "^8.10.149",
     "@types/bun": "^1.2.10",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/yargs": "^17.0.33",
-    "drizzle-kit": "^0.31.2",
+    "dotenv": "^17.0.0",
+    "drizzle-kit": "^0.31.4",
     "frontend": "workspace:*",
     "prettier": "^3.5.3",
     "yargs": "^17"

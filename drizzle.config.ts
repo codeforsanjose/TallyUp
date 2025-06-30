@@ -1,4 +1,11 @@
+import assert from 'assert';
+import dotenv from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
+
+dotenv.config();
+
+const { DATABASE_URL: dbUrl } = process.env;
+assert(dbUrl, 'DATABASE_URL must be defined in .env file');
 
 export default defineConfig({
   schema: './src/lib/db/schema.ts',
@@ -8,5 +15,8 @@ export default defineConfig({
     table: 'migrations',
     schema: 'tally_up',
   },
-  schemaFilter: 'tally_up',
+  casing: 'snake_case',
+  dbCredentials: {
+    url: dbUrl,
+  },
 });

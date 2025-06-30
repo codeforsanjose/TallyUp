@@ -1,1 +1,2 @@
-export * from './connect';
+export * from './client';
+export * as schema from './schema';
