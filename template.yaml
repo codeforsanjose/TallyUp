@@ -4,6 +4,16 @@ Description: >-
 Transform:
   - AWS::Serverless-2016-10-31
 
+Parameters:
+  CustomDomainName:
+    Type: String
+    Description: Custom domain name for the API
+    Default: tallyup.opensourcesanjose.org
+  CustomDomainCertificateArn:
+    Type: String
+    Description: ARN of the ACM certificate for the custom domain
+    Default: arn:aws:acm:us-east-1:253016134262:certificate/fe98691e-f11c-45eb-84c7-64c98d6e588c
+
 Globals:
   Function:
     Runtime: nodejs22.x
@@ -17,12 +27,6 @@ Globals:
         DB_URL_SECRET_ARN: !Ref dbConnectionSecret
     LoggingConfig:
       LogGroup: !Sub "/aws/lambda/${AWS::StackName}"
-
-Parameters:
-  TallyUpDomainPrefix:
-    Type: String
-    Description: Domain for Tally Up
-    Default: tallyup-pool
 
 Resources:
   apiMain:
@@ -170,6 +174,8 @@ Resources:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Aliases:
+          - !Ref CustomDomainName
         Origins:
           - Id: indexDotHtml
             CustomOriginConfig:
@@ -209,7 +215,10 @@ Resources:
           OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
         PriceClass: PriceClass_100
         ViewerCertificate:
-          CloudFrontDefaultCertificate: true
+          AcmCertificateArn: !Ref CustomDomainCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+
   dbConnectionSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -231,7 +240,4 @@ Resources:
 Outputs:
   S3BucketName:
     Description: S3 bucket name for index.html
-    Value: !Ref indexDotHtml
-  CloudFrontDistributionUrl:
-    Description: CloudFront distribution URL for index.html
-    Value: !GetAtt cloudfrontDistribution.DomainName
+    Value: !Sub s3://${indexDotHtml}

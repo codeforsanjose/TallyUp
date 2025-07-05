@@ -6,6 +6,7 @@ import { handler as resendVerificationEmailFunction } from '../../src/resendVeri
 import { handler as verifyEmailHandler } from '../../src/verifyEmailFunction';
 import { mockApiGatewayEvent } from './mock-api-gateway-event';
 import { waitForPostgres } from './wait-for-postgres';
+import cors from 'cors';
 
 export default async function dev() {
   // Before starting the server, ensure that the environment variables are set
@@ -13,6 +14,8 @@ export default async function dev() {
   process.env['AWS_ACCESS_KEY_ID'] = 'mockAccessKeyId';
   process.env['AWS_SECRET_ACCESS_KEY'] = 'mockSecretAccessKey';
   process.env['AWS_SESSION_TOKEN'] = 'mockSessionToken';
+
+  const port = 3000;
 
   // Then use bunx drizzle-kit push to push the schema to the database
   await waitForPostgres('postgres://postgres@db:5432/postgres', 10, 1000);
@@ -30,8 +33,14 @@ export default async function dev() {
 
   const app = express();
   app.use(express.raw({ type: '*/*' }));
+  app.use(
+    cors({
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      credentials: true,
+    }),
+  );
 
-  // For now, manually do routing
   app.all('/*splat', async (req, res) => {
     const routes = {
       'POST /api/register': registerHandler,
@@ -59,8 +68,8 @@ export default async function dev() {
     }
   });
 
-  app.listen(3000, () => {
-    console.log('Server is running on http://localhost:3000');
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
     console.log('Available routes:');
     console.log('POST /api/register');
     console.log('POST /api/login');

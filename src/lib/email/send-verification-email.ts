@@ -23,7 +23,7 @@ export const sendVerificationEmail = async ({
 
   if (process.env.NODE_ENV === 'development') {
     console.log(
-      `Instead of sending an email, we are logging the verification link: ${verificationLink}`,
+      `Instead of sending an email, we are logging the verification link. Please append this to your baseUrl: /api/verify-email?token=${token}`,
     );
 
     return { success: true, data: { messageId: 'mock-message-id-for-dev' } };
