@@ -15,7 +15,6 @@ Evolved MealTally repo to tally and track handouts of any sort to people in need
 ## Development
 
 1. `docker compose up --build --force-recreate`
-2. You can now use your favorite HTTP client to make requests to the API at `http://localhost:3000/api`
 
 ## Large Texts
 

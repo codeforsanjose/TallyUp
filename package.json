@@ -18,6 +18,7 @@
     "@asteasolutions/zod-to-openapi": "^7.3.0",
     "@aws-sdk/client-cloudformation": "^3.835.0",
     "@aws-sdk/client-lambda": "^3.835.0",
+    "@aws-sdk/client-s3": "^3.842.0",
     "@aws-sdk/credential-provider-ini": "^3.835.0",
     "@aws-sdk/credential-providers": "^3.835.0",
     "@aws-sdk/types": "^3.821.0",
@@ -27,6 +28,7 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/yargs": "^17.0.33",
+    "archiver": "^7.0.1",
     "cors": "^2.8.5",
     "drizzle-kit": "^0.31.4",
     "express": "^5.1.0",
@@ -39,9 +41,9 @@
     "build": "bun run scripts/build.ts",
     "dev": "bun --hot --env-file=./.env.development run scripts/dev/index.ts ",
     "deploy": "bun run scripts/deploy",
-    "gen-migrations": "drizzle-kit generate",
     "gen-spec": "bun run scripts/gen-spec.ts",
-    "format": "bun run prettier --write ."
+    "format": "bun run prettier --write .",
+    "postinstall": "bun run scripts/postinstall"
   },
   "jest": {
     "testMatch": [

@@ -33,7 +33,6 @@ export const resendVerificationEmail: Action<
     destinationEmail: user.email,
     domainName,
     stage,
-    tallyUpSourceEmail: 'logandang100@gmail.com', // TODO: Do not hardcode this
     token: verificationToken,
   });
   if (!result.success) return { success: false, error: result.error };

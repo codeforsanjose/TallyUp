@@ -2,16 +2,16 @@ import { defineConfig, type ConfigExternal } from 'orval';
 import path from 'path';
 
 type CreateOrvalConfigParams = {
-  baseUrl?: string;
+  baseUrl?: string | null;
 };
 
 export const createConfigParams = (cfgOverrides?: CreateOrvalConfigParams): ConfigExternal => {
   return {
     api: {
       output: {
-        baseUrl: cfgOverrides?.baseUrl,
+        baseUrl: cfgOverrides?.baseUrl || undefined,
         client: 'fetch',
-        workspace: path.resolve('./src/api/'),
+        workspace: path.resolve(__dirname, './src/api/'),
         mode: 'split',
         target: './sdk.ts',
         schemas: './schemas',

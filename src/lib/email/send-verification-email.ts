@@ -5,7 +5,6 @@ type SendVerificationEmailParams = {
   destinationEmail: string;
   domainName: string;
   stage: string;
-  tallyUpSourceEmail: string;
   token: string;
   sesClient?: SESClient | SESClientConfig;
 };
@@ -15,7 +14,6 @@ export const sendVerificationEmail = async ({
   domainName,
   sesClient,
   stage,
-  tallyUpSourceEmail,
   token,
 }: SendVerificationEmailParams): Promise<Result<{ messageId: string }>> => {
   const verificationLink = `https://${domainName}/${stage}/api/verify-email?token=${token}`;
@@ -30,7 +28,7 @@ export const sendVerificationEmail = async ({
   } else {
     const result = await client.send(
       new SendEmailCommand({
-        Source: tallyUpSourceEmail,
+        Source: 'tallyup@mail.opensourcesanjose.org',
         Destination: {
           ToAddresses: [destinationEmail],
         },

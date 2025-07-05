@@ -47,6 +47,9 @@ const bunBuild = async (entrypoints: string[]): Promise<Result<Bun.BuildOutput[]
         sourcemap: 'linked',
         target: 'node',
         external: ['@node-rs/argon2'],
+        define: {
+          'process.env.NODE_ENV': '"production"',
+        },
       });
     }),
   );
@@ -126,6 +129,8 @@ export const build = async (cfg: BuildConfig) => {
   }
 
   await frontendBuild({
+    genClient: true,
+    genClientBaseUrl: '/api',
     outDir: resolve(outDir, 'frontend'),
     verbose,
   });

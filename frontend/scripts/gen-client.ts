@@ -5,8 +5,8 @@ import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
 import { createConfigParams as createOrvalConfig } from '../orval.config';
 
-const defaults: Required<GenerateAPIClientOptions> = {
-  baseUrl: 'http://localhost:3000/api',
+const defaults: Required<GenerateAPIClientOptions> & {} = {
+  baseUrl: '',
   reschema: false,
   specPath: path.resolve(__dirname, '../openapi.yaml'),
   verbose: false,
@@ -40,7 +40,7 @@ if (import.meta.main) {
 }
 
 export type GenerateAPIClientOptions = {
-  baseUrl?: string;
+  baseUrl?: string | null;
   reschema?: boolean;
   specPath?: string;
   verbose?: boolean;

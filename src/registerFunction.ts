@@ -38,7 +38,6 @@ const register: Action<AuthRequest, RegisterResponse, RegisterDeps> = async (
   const { domainName, stage } = rawEvent.requestContext;
   const result = await sendVerificationEmail({
     destinationEmail: email,
-    tallyUpSourceEmail: 'logandang100@gmail.com', // TODO: Do not hardcode this
     domainName,
     stage,
     token: verifyEmailToken,

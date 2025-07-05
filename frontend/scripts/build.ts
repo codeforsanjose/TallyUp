@@ -6,6 +6,7 @@ import ViteConfig from '../vite.config.js';
 
 type BuildConfig = {
   genClient?: boolean;
+  genClientBaseUrl?: string | null;
   outDir?: string;
   verbose?: boolean;
 };
@@ -13,17 +14,18 @@ type BuildConfig = {
 export const build = async (configOverride: BuildConfig) => {
   const defaults: Required<BuildConfig> = {
     genClient: false,
+    genClientBaseUrl: null,
     outDir: 'dist',
     verbose: false,
   };
 
   const config = { ...defaults, ...configOverride };
-  const { genClient, outDir, verbose } = config;
+  const { genClient, genClientBaseUrl, outDir, verbose } = config;
 
   if (genClient) {
     if (verbose) console.log('Generating API client from OpenAPI schema...');
     const { default: generateAPIClient } = await import('./gen-client.js');
-    await generateAPIClient({ reschema: true, verbose });
+    await generateAPIClient({ baseUrl: genClientBaseUrl, reschema: true, verbose });
   }
 
   try {
@@ -53,6 +55,10 @@ if (import.meta.main) {
       description: 'Generate API client from OpenAPI schema',
       default: false,
     })
+    .option('genClientBaseUrl', {
+      type: 'string',
+      description: 'Base URL for the generated API client',
+    })
     .option('outDir', {
       type: 'string',
       description: 'Output directory for the build',
@@ -64,6 +70,7 @@ if (import.meta.main) {
       description: 'Enable verbose output',
       default: false,
     })
+    .strict()
     .parseSync();
   const { outDir, verbose } = argv;
   const genClient = argv['gen-client'];

@@ -6,4 +6,4 @@ COPY bun.lock .
 
 COPY package.json .
 
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile --ignore-scripts

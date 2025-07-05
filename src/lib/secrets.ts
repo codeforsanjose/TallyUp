@@ -16,7 +16,7 @@ export const getSecretValue = async (
   client: SecretsManagerClient,
   secretId: string,
 ): Promise<string> => {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV !== 'production') {
     // In development, we can use a local .env file or similar to mock secrets
     const secretValue = process.env[secretId];
     if (!secretValue) {
