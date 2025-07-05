@@ -1,18 +1,33 @@
-import { createClient, defaultPlugins } from '@hey-api/openapi-ts';
 import { existsSync } from 'fs';
+import { generate, type Config } from 'orval';
 import path from 'path';
-import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
+import yargs from 'yargs/yargs';
+import { createConfigParams as createOrvalConfig } from '../orval.config';
 
-const openapiPath = path.resolve(__dirname, '../../openapi.yaml');
-const clientOutputPath = path.resolve(__dirname, '../src/client');
+const defaults: Required<GenerateAPIClientOptions> & {} = {
+  baseUrl: '',
+  reschema: false,
+  specPath: path.resolve(__dirname, '../openapi.yaml'),
+  verbose: false,
+};
 
 if (import.meta.main) {
   const argv = await yargs(hideBin(process.argv))
+    .option('base-url', {
+      type: 'string',
+      description: 'Base URL for the API',
+      default: defaults.baseUrl,
+    })
     .option('reschema', {
       type: 'boolean',
       description: 'Regenerate the OpenAPI schema',
       default: false,
+    })
+    .option('spec-path', {
+      type: 'string',
+      description: 'Path to the OpenAPI spec file',
+      default: defaults.specPath,
     })
     .option('verbose', {
       type: 'boolean',
@@ -20,51 +35,32 @@ if (import.meta.main) {
       default: false,
     })
     .parse();
-  const { reschema } = argv;
 
-  await generateAPIClient();
+  await generateAPIClient(argv);
 }
 
 export type GenerateAPIClientOptions = {
+  baseUrl?: string | null;
   reschema?: boolean;
+  specPath?: string;
   verbose?: boolean;
 };
 
 export default async function generateAPIClient(opts?: GenerateAPIClientOptions) {
-  const defaults: Required<GenerateAPIClientOptions> = {
-    reschema: false,
-    verbose: false,
-  };
-
-  const reschema = opts?.reschema ?? defaults.reschema;
-  const verbose = opts?.verbose ?? defaults.verbose;
-
+  const { baseUrl, reschema, specPath, verbose } = { ...defaults, ...opts };
   if (reschema) {
-    if (verbose) console.log('Generating OpenAPI schema...');
-    Bun.spawnSync({
-      cmd: ['bun', 'run', 'gen-spec'],
-      cwd: path.resolve(__dirname, '../..'),
-      stdout: 'inherit',
-      stderr: 'inherit',
-    });
+    const generateSpec = (await import('../../scripts/gen-spec')).default;
+    if (existsSync(specPath)) {
+      if (verbose) console.log(`Removing existing OpenAPI spec at ${specPath}`);
+      Bun.file(specPath).unlink();
+    }
+
+    if (verbose) console.log('Generating OpenAPI spec...');
+    await generateSpec({ outputFile: specPath });
+    if (verbose) console.log(`OpenAPI spec generated at ${specPath}`);
   }
 
-  if (!existsSync(openapiPath)) {
-    console.error(
-      `OpenAPI schema not found at ${openapiPath}. Please run with --reschema to generate it.`,
-    );
-    process.exit(1);
-  }
-
-  createClient({
-    input: openapiPath,
-    output: clientOutputPath,
-    plugins: [
-      ...defaultPlugins,
-      {
-        name: '@hey-api/client-fetch',
-        runtimeConfigPath: './src/dev-utils/heyapi-config.ts', // TODO: When I wrote this, path.resolve was not working correctly
-      },
-    ],
-  });
+  if (verbose) console.log('Generating API client...');
+  const defaultConfig = createOrvalConfig({ baseUrl }) as Config;
+  await generate(defaultConfig['api']);
 }

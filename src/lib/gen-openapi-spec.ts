@@ -7,17 +7,20 @@ import { stringify } from 'yaml';
 import { z } from 'zod';
 import {
   AuthRequestModel,
-  AuthResponseModel,
+  LoginResponseModel,
   BaseResponseModel,
   RegisterResponseModel,
-} from '../openapi';
+  VerifyEmailResponseModel,
+  RefreshTokenRequestModel,
+  RefreshTokenResponseModel,
+} from './openapi';
 export const generateOpenApiSpec = async (): Promise<string> => {
   extendZodWithOpenApi(z);
 
   const registry = new OpenAPIRegistry();
 
   const OpenApiAuthRequestModel = AuthRequestModel.openapi('AuthRequestModel');
-  const OpenApiAuthResponseModel = AuthResponseModel.openapi('AuthResponseModel');
+  const OpenApiAuthResponseModel = LoginResponseModel.openapi('LoginResponseModel');
   const OpenApiBaseResponseModel = BaseResponseModel.openapi('BaseResponseModel');
   const OpenApiRegisterResponseModel = RegisterResponseModel.openapi('RegisterResponseModel');
 
@@ -39,6 +42,38 @@ export const generateOpenApiSpec = async (): Promise<string> => {
         content: {
           'application/json': {
             schema: OpenApiAuthResponseModel,
+          },
+        },
+      },
+      '400': {
+        description: 'Invalid request',
+        content: {
+          'application/json': {
+            schema: OpenApiBaseResponseModel,
+          },
+        },
+      },
+    },
+  });
+
+  registry.registerPath({
+    method: 'post',
+    path: '/refresh-token',
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: RefreshTokenRequestModel.openapi('RefreshTokenRequestModel'),
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Refresh token successful',
+        content: {
+          'application/json': {
+            schema: RefreshTokenResponseModel.openapi('RefreshTokenResponseModel'),
           },
         },
       },
@@ -83,6 +118,60 @@ export const generateOpenApiSpec = async (): Promise<string> => {
         },
       },
     },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/resend-verification-email',
+    request: {
+      query: z
+        .object({
+          email: z.string().email('Invalid email format'),
+        })
+        .openapi('ResendVerificationEmailRequest'),
+    },
+    responses: {
+      '200': {
+        description: 'Verification email resent successfully',
+        content: {
+          'application/json': {
+            schema: OpenApiBaseResponseModel,
+          },
+        },
+      },
+      '400': {
+        description: 'Invalid request',
+        content: {
+          'application/json': {
+            schema: OpenApiBaseResponseModel,
+          },
+        },
+      },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/verify',
+    responses: {
+      '200': {
+        description: 'Verification successful',
+        content: {
+          'application/json': {
+            schema: VerifyEmailResponseModel.openapi('VerifyResponseModel'),
+          },
+        },
+      },
+      '400': {
+        description: 'Invalid request',
+        content: {
+          'application/json': {
+            schema: OpenApiBaseResponseModel,
+          },
+        },
+      },
+    },
+    request: { query: VerifyEmailResponseModel.openapi('VerifyResponseModel') },
   });
 
   const result = new OpenApiGeneratorV31(registry.definitions).generateDocument({

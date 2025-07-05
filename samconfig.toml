@@ -4,6 +4,7 @@ version = 0.1
 
 [default.global.parameters]
 stack_name = "tally-up-backend"
+region = "us-west-2"
 
 [default.build.parameters]
 cached = true
@@ -17,7 +18,6 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
 s3_prefix = "tally-up-backend"
-region = "us-west-2"
 image_repositories = []
 
 [default.package.parameters]

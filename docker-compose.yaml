@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      retries: 5
+      start_period: 30s
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    pull_policy: build
+    command: ['bun', 'dev']
+    environment:
+      - DATABASE_URL='postgres://postgres@db:5432/postgres'
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+    ports:
+      - '5173:5173'
+    command: ['bun', 'dev', '--host=0.0.0.0']
+
+volumes:
+  db_data:
+    driver: local

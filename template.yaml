@@ -4,6 +4,16 @@ Description: >-
 Transform:
   - AWS::Serverless-2016-10-31
 
+Parameters:
+  CustomDomainName:
+    Type: String
+    Description: Custom domain name for the API
+    Default: tallyup.opensourcesanjose.org
+  CustomDomainCertificateArn:
+    Type: String
+    Description: ARN of the ACM certificate for the custom domain
+    Default: arn:aws:acm:us-east-1:253016134262:certificate/fe98691e-f11c-45eb-84c7-64c98d6e588c
+
 Globals:
   Function:
     Runtime: nodejs22.x
@@ -12,12 +22,11 @@ Globals:
     MemorySize: 128
     Timeout: 100
     Handler: index.handler
-
-Parameters:
-  TallyUpDomainPrefix:
-    Type: String
-    Description: Domain for Tally Up
-    Default: tallyup-pool
+    Environment:
+      Variables:
+        DB_URL_SECRET_ARN: !Ref dbConnectionSecret
+    LoggingConfig:
+      LogGroup: !Sub "/aws/lambda/${AWS::StackName}"
 
 Resources:
   apiMain:
@@ -26,10 +35,17 @@ Resources:
       Description: API for Tally Up
       StageName: prod
       FailOnWarnings: true
+  argon2Layer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: Argon2 layer for Tally Up
+      ContentUri: ./layers/argon2/argon2-layer.zip
+      CompatibleRuntimes:
+        - nodejs22.x
   openApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./dist/build/openApiFunction
+      CodeUri: ./dist/build/openapiFunction
       Events:
         ApiEvent:
           Type: HttpApi
@@ -49,12 +65,31 @@ Resources:
             ApiId: !Ref apiMain
             Method: POST
             Path: /api/login
-            TimeoutInMillis: 5000
-      Policies:
-        - AmazonCognitoPowerUser
+            TimeoutInMillis: 10000
       Environment:
         Variables:
-          USER_POOL_CLIENT_ID: !Ref cognitoUserPoolClient
+          JWT_SECRET_ARN: !Ref jwtSecret
+      Policies:
+        - SecretsManagerReadWrite
+      Layers:
+        - !Ref argon2Layer
+  refreshTokenFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./dist/build/refreshTokenFunction
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: POST
+            Path: /api/refresh-token
+            TimeoutInMillis: 5000
+      Environment:
+        Variables:
+          JWT_SECRET_ARN: !Ref jwtSecret
+      Policies:
+        - SecretsManagerReadWrite
   registerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -66,69 +101,52 @@ Resources:
             ApiId: !Ref apiMain
             Method: POST
             Path: /api/register
-            TimeoutInMillis: 5000
-      Policies:
-        - AmazonCognitoPowerUser
+            TimeoutInMillis: 10000 # Argon2 is slow on purpose
       Environment:
         Variables:
-          USER_POOL_CLIENT_ID: !Ref cognitoUserPoolClient
-  cognitoUserPool:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      AccountRecoverySetting:
-        RecoveryMechanisms:
-          - Name: verified_email
-            Priority: 1
-      AutoVerifiedAttributes:
-        - email
-      DeletionProtection: INACTIVE # TODO: Set to ACTIVE in production
-      EmailConfiguration:
-        EmailSendingAccount: COGNITO_DEFAULT # TODO: Set to DEVELOPER when domain is verified
+          JWT_SECRET_ARN: !Ref jwtSecret
       Policies:
-        PasswordPolicy:
-          MinimumLength: 8
-          RequireLowercase: true
-          RequireNumbers: true
-          RequireSymbols: true
-          RequireUppercase: true
-      Schema:
-        - Name: email
-          Required: true
-          Mutable: true
-      UserAttributeUpdateSettings:
-        AttributesRequireVerificationBeforeUpdate:
-          - email
-      UsernameAttributes:
-        - email
-      UsernameConfiguration:
-        CaseSensitive: false
-      UserPoolName: tally-up-user-pool
-      VerificationMessageTemplate:
-        DefaultEmailOption: CONFIRM_WITH_LINK
-      UserPoolTier: LITE # https://github.com/aws/serverless-application-model/issues/3726
-  cognitoUserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
+        - SecretsManagerReadWrite
+        - AmazonSESFullAccess
+      Layers:
+        - !Ref argon2Layer
+  resendVerificationEmailFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      UserPoolId: !Ref cognitoUserPool
-      AllowedOAuthFlowsUserPoolClient: true
-      AllowedOAuthFlows:
-        - code
-      AllowedOAuthScopes:
-        - email
-        - openid
-      CallbackURLs:
-        - https://jwt.io
-      DefaultRedirectURI: https://jwt.io
-      ExplicitAuthFlows:
-        - ALLOW_USER_PASSWORD_AUTH
-      SupportedIdentityProviders:
-        - COGNITO
-  cognitoUserPoolDomain:
-    Type: AWS::Cognito::UserPoolDomain
+      CodeUri: ./dist/build/resendVerificationEmailFunction
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: GET
+            Path: /api/resend-verification-email
+            TimeoutInMillis: 5000
+      Environment:
+        Variables:
+          JWT_SECRET_ARN: !Ref jwtSecret
+      Policies:
+        - SecretsManagerReadWrite
+        - AmazonSESFullAccess
+  verifyEmailFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      Domain: !Ref TallyUpDomainPrefix
-      UserPoolId: !Ref cognitoUserPool
-      ManagedLoginVersion: 1 # https://github.com/aws/serverless-application-model/issues/3726 basically this issue but for all of cognito
+      CodeUri: ./dist/build/verifyEmailFunction
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref apiMain
+            Method: GET
+            Path: /api/verify-email
+            TimeoutInMillis: 5000
+      Environment:
+        Variables:
+          JWT_SECRET_ARN: !Ref jwtSecret
+      Policies:
+        - SecretsManagerReadWrite
+      Layers:
+        - !Ref argon2Layer
   indexDotHtml:
     Type: AWS::S3::Bucket
     Properties:
@@ -145,26 +163,28 @@ Resources:
     Properties:
       Bucket: !Ref indexDotHtml
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Principal: '*'
+            Principal: "*"
             Action:
               - s3:GetObject
-            Resource: !Sub 'arn:${AWS::Partition}:s3:::${indexDotHtml}/*'
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${indexDotHtml}/*"
   cloudfrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Aliases:
+          - !Ref CustomDomainName
         Origins:
           - Id: indexDotHtml
             CustomOriginConfig:
               OriginProtocolPolicy: http-only
-            DomainName: !Sub '${indexDotHtml}.s3-website-${AWS::Region}.amazonaws.com'
+            DomainName: !Sub "${indexDotHtml}.s3-website-${AWS::Region}.amazonaws.com"
           - Id: apiMain
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
-            DomainName: !Sub '${apiMain}.execute-api.${AWS::Region}.amazonaws.com'
+            DomainName: !Sub "${apiMain}.execute-api.${AWS::Region}.amazonaws.com"
             OriginPath: /prod
         Enabled: true
         CacheBehaviors:
@@ -195,15 +215,29 @@ Resources:
           OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
         PriceClass: PriceClass_100
         ViewerCertificate:
-          CloudFrontDefaultCertificate: true
+          AcmCertificateArn: !Ref CustomDomainCertificateArn
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+
+  dbConnectionSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: Connection string for Neon database
+      Name: neon-connection-string
+  jwtSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: JWT secret key for Tally Up
+      Name: tally-up-jwt-secret
+      GenerateSecretString:
+        RequireEachIncludedType: true
+  lambdaLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}"
+      RetentionInDays: 1 # TODO: Set to 7 or 14 days for production
 
 Outputs:
   S3BucketName:
     Description: S3 bucket name for index.html
-    Value: !Ref indexDotHtml
-  CloudFrontDistributionUrl:
-    Description: CloudFront distribution URL for index.html
-    Value: !GetAtt cloudfrontDistribution.DomainName
-  TallyUpDomain:
-    Description: Domain for Tally Up
-    Value: !Sub 'https://${TallyUpDomainPrefix}.auth.${AWS::Region}.amazoncognito.com'
+    Value: !Sub s3://${indexDotHtml}

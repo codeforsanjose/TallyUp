@@ -28,3 +28,4 @@ src/client/
 !src/client/index.ts
 
 dev-dist/
+src/api/
