@@ -29,21 +29,20 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/yargs": "^17.0.33",
     "archiver": "^7.0.1",
-    "cors": "^2.8.5",
     "drizzle-kit": "^0.31.4",
-    "express": "^5.1.0",
     "nodemon": "^3.1.10",
-    "pg": "^8.16.3",
     "prettier": "^3.5.3",
+    "ws": "^8.18.3",
     "yargs": "^17"
   },
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "dev": "bun --hot --env-file=./.env.development run scripts/dev/index.ts ",
+    "dev": "bun --hot --define=process.env.NODE_ENV:\"'development'\" run scripts/dev/index.ts ",
     "deploy": "bun run scripts/deploy",
     "gen-spec": "bun run scripts/gen-spec.ts",
     "format": "bun run prettier --write .",
-    "postinstall": "bun run scripts/postinstall"
+    "postinstall": "bun run scripts/postinstall",
+    "push-schema": "DATABASE_URL=postgres://postgres@localhost:5432/postgres bunx drizzle-kit push"
   },
   "jest": {
     "testMatch": [

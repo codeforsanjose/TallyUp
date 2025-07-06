@@ -1,14 +1,24 @@
-import express from 'express';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { handler as loginHandler } from '../../src/loginFunction';
 import { handler as refreshTokenFunction } from '../../src/refreshTokenFunction';
 import { handler as registerHandler } from '../../src/registerFunction';
 import { handler as resendVerificationEmailFunction } from '../../src/resendVerificationEmailFunction';
 import { handler as verifyEmailHandler } from '../../src/verifyEmailFunction';
-import { mockApiGatewayEvent } from './mock-api-gateway-event';
-import { waitForPostgres } from './wait-for-postgres';
-import cors from 'cors';
+import { asBunHandler } from './as-bun-handler';
+import { pushSchema } from './push-schema';
 
-export default async function dev() {
+type DevParams = {
+  verbose?: boolean;
+};
+
+const defaults: Required<DevParams> = {
+  verbose: false,
+};
+
+export default async function dev(params: DevParams = {}) {
+  const { verbose } = { ...defaults, ...params };
+
   // Before starting the server, ensure that the environment variables are set
   process.env['AWS_REGION'] = 'us-west-2';
   process.env['AWS_ACCESS_KEY_ID'] = 'mockAccessKeyId';
@@ -17,68 +27,28 @@ export default async function dev() {
 
   const port = 3000;
 
-  // Then use bunx drizzle-kit push to push the schema to the database
-  await waitForPostgres('postgres://postgres@db:5432/postgres', 10, 1000);
-  const pushProcess = Bun.spawnSync(['bunx', 'drizzle-kit', 'push'], {
-    cwd: process.cwd(),
-    env: {
-      ...(process.env as Record<string, string>),
-      DATABASE_URL: 'postgres://postgres@db:5432/postgres',
+  pushSchema({ verbose });
+  Bun.serve({
+    routes: {
+      '/api/register': { POST: asBunHandler(registerHandler) },
+      '/api/login': { POST: asBunHandler(loginHandler) },
+      '/api/refresh-token': { POST: asBunHandler(refreshTokenFunction) },
+      '/api/resend-verification-email': asBunHandler(resendVerificationEmailFunction),
+      '/api/verify-email': asBunHandler(verifyEmailHandler),
     },
-  });
-  if (pushProcess.exitCode !== 0) {
-    console.error('Error pushing schema to database:', pushProcess.stdout.toString());
-    process.exit(pushProcess.exitCode);
-  }
-
-  const app = express();
-  app.use(express.raw({ type: '*/*' }));
-  app.use(
-    cors({
-      origin: '*',
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      credentials: true,
-    }),
-  );
-
-  app.all('/*splat', async (req, res) => {
-    const routes = {
-      'POST /api/register': registerHandler,
-      'POST /api/login': loginHandler,
-      'POST /api/refresh-token': refreshTokenFunction,
-      'GET /api/resend-verification-email': resendVerificationEmailFunction,
-      'GET /api/verify-email': verifyEmailHandler,
-    };
-    const event = mockApiGatewayEvent(req);
-
-    const routeKey = `${req.method} ${req.path}`;
-    if (routeKey in routes) {
-      try {
-        const response = await routes[routeKey as keyof typeof routes](event);
-        res
-          .status(response.statusCode || 500)
-          .json(JSON.parse(response.body || 'No body, this should never happen'));
-      } catch (error) {
-        console.error('Error handling request:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-      }
-    } else {
-      console.warn(`No handler found for route: ${routeKey}`);
-      res.status(404).json({ error: 'Not Found' });
-    }
-  });
-
-  app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-    console.log('Available routes:');
-    console.log('POST /api/register');
-    console.log('POST /api/login');
-    console.log('POST /api/refresh-token');
-    console.log('POST /api/resend-verification-email');
-    console.log('GET /api/verify-email');
+    port,
   });
 }
 
 if (import.meta.main) {
-  await dev();
+  const argv = yargs(hideBin(process.argv))
+    .option('verbose', {
+      type: 'boolean',
+      description: 'Run with verbose logging',
+      default: false,
+      alias: 'v',
+    })
+    .parseSync();
+
+  await dev(argv);
 }

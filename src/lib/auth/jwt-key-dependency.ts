@@ -12,6 +12,12 @@ export type RawJwtKeyDependency = Awaited<
 export const jwtKeyDependency = (client?: SecretsManagerClient | SecretsManagerClientConfig) =>
   createDependency(
     async (env) => {
+      if (process.env.NODE_ENV === 'development') {
+        return {
+          jwtKey: 'oof-ouch-owie',
+        };
+      }
+
       const jwtArn = env['JWT_SECRET_ARN'];
       if (!jwtArn)
         throw new Error(

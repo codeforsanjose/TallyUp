@@ -1,19 +1,19 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
-import type { Request } from 'express';
 
-export const mockApiGatewayEvent = (req: Request): APIGatewayProxyEventV2 => {
-  const body = (req.body as Buffer)?.toString('utf-8');
-
-  console.log(req.query);
+export const mockApiGatewayEvent = async <T extends string>(
+  req: Bun.BunRequest<T>,
+): Promise<APIGatewayProxyEventV2> => {
+  const body = await req.json();
+  const url = new URL(req.url);
 
   return {
     body,
-    headers: req.headers as Record<string, string>,
+    headers: Object.fromEntries(req.headers),
     isBase64Encoded: false,
     pathParameters: req.params,
-    queryStringParameters: req.query as Record<string, string>,
-    rawPath: req.path,
-    rawQueryString: new URLSearchParams(req.query as Record<string, string>).toString(),
+    queryStringParameters: Object.fromEntries(url.searchParams),
+    rawPath: url.pathname,
+    rawQueryString: url.search,
     version: '2.0',
     requestContext: {
       accountId: 'mockAccountId',
@@ -22,17 +22,17 @@ export const mockApiGatewayEvent = (req: Request): APIGatewayProxyEventV2 => {
       domainPrefix: 'mockDomainPrefix',
       http: {
         method: req.method,
-        path: req.path,
-        protocol: req.protocol,
-        sourceIp: req.ip || 'unknown',
-        userAgent: req.get('User-Agent') || 'unknown',
+        path: url.pathname,
+        protocol: url.protocol.replace(':', ''),
+        sourceIp: req.headers.get('X-Forwarded-For') || 'unknown',
+        userAgent: req.headers.get('User-Agent') || 'unknown',
       },
       requestId: 'mockRequestId',
-      routeKey: `${req.method.toUpperCase()} ${req.path}`,
+      routeKey: `${req.method.toUpperCase()} ${url.pathname}`,
       stage: 'mockStage',
       time: new Date().toISOString(),
       timeEpoch: Date.now(),
     },
-    routeKey: `${req.method.toUpperCase()} ${req.path}`,
+    routeKey: `${req.method.toUpperCase()} ${url.pathname}`,
   };
 };
