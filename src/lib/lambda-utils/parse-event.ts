@@ -53,7 +53,7 @@ export const parseEvent = <
         return { success: false, error: new Error(parseResult.error.message) };
       return { success: true, data: { ...parseResult.data, ...pathParameters } } as Result<T & V>;
     } catch (error) {
-      return { success: false, error: new Error('Invalid JSON in request body') };
+      return { success: false, error: new Error(`Invalid JSON in request body: ${params.body}`) };
     }
   }
 };

@@ -7,8 +7,6 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import { createDependency } from '../lambda-utils/create-dependency';
 import { getSecretValue } from '../secrets';
 import * as schema from './schema';
-// @ts-ignore -- used once in the whole project
-import ws from 'ws';
 
 export type RawDrizzleDependency = Awaited<
   ReturnType<ReturnType<typeof drizzleDependency>['strategy']>
@@ -20,11 +18,11 @@ export const drizzleDependency = (secrets?: SecretsManagerClient | SecretsManage
       if (process.env.NODE_ENV === 'development') {
         neonConfig.useSecureWebSocket = false;
         neonConfig.wsProxy = (host) => `${host}:4444/v1`;
-        neonConfig.webSocketConstructor = ws;
 
-        const connectionString = 'postgres://postgres:postgres@db.localtest.me:5432/postgres';
+        const connectionString = 'postgres://postgres:postgres@db.localtest.me:5432';
+        if (!connectionString)
+          throw new Error('DATABASE_URL is not defined in environment variables');
         const client = drizzle(new Pool({ connectionString }), { casing: 'snake_case', schema });
-        client;
         return {
           drizzle: client,
         };

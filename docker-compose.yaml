@@ -36,9 +36,9 @@ services:
       - .:/app
       - /app/node_modules
     pull_policy: build
-    command: ['bun', 'dev']
-    environment:
-      - DATABASE_URL='postgres://postgres:postgres@db:5432/postgres'
+    command: ['bun', 'dev:docker', '-v']
+    extra_hosts:
+      - 'db.localtest.me:host-gateway'
   frontend:
     build:
       context: ./frontend

@@ -31,7 +31,8 @@ const register: Action<AuthRequest, RegisterResponse, RegisterDeps> = async (
     .onConflictDoNothing()
     .returning({ id: users.id });
   const userId = query[0]?.id;
-  if (!userId) return { success: false, error: new Error('Failed to create user') };
+  if (!userId)
+    return { success: false, error: new Error('This email is already registered with TallyUp!') };
 
   // Send verification email
   const verifyEmailToken = signJwtToken({ expiresIn: '15m', userId, jwtKey });

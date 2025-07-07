@@ -6,7 +6,7 @@
   "main": "scripts/build.ts",
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "dev": "vite",
+    "dev": "bun run scripts/dev.ts",
     "gen-client": "bun run scripts/gen-client.ts -- --reschema"
   },
   "devDependencies": {

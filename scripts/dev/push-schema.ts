@@ -2,7 +2,8 @@ export const pushSchema = (params: {
   verbose: boolean;
 }): { success: true } | { success: false; error: Error } => {
   const { verbose } = params;
-  const connectionString = 'postgres://postgres:postgres@localhost:5432/postgres';
+  const connectionString = process.env['DATABASE_URL'];
+  if (!connectionString) throw new Error('DATABASE_URL is not defined in environment variables');
   const ioString = verbose ? 'inherit' : 'pipe';
   // Then use bunx drizzle-kit push to push the schema to the database
   const pushProcess = Bun.spawnSync(['bunx', 'drizzle-kit', 'push'], {

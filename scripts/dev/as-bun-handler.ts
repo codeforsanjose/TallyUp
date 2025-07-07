@@ -7,7 +7,7 @@ export const asBunHandler = <T extends string>(
   return async (req: Bun.BunRequest<T>) => {
     const event = await mockApiGatewayEvent(req);
     const response = await handler(event);
-    return new Response(JSON.stringify(response.body), {
+    return new Response(response.body, {
       status: response.statusCode,
       headers: {
         'Access-Control-Allow-Origin': '*',

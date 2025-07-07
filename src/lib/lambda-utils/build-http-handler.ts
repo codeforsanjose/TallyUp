@@ -94,7 +94,10 @@ export const buildHttpHandler = <
         body,
         method,
       });
-      if (!result.success) return buildResponse(400, { message: result.error.message });
+      if (!result.success) {
+        console.error(`Event parsing failed: ${result.error.message}`);
+        return buildResponse(400, { message: result.error.message });
+      }
 
       // Execute action
       const actionWithDeps = await buildAction(action, dependencies, env);

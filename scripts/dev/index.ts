@@ -7,6 +7,7 @@ import { handler as resendVerificationEmailFunction } from '../../src/resendVeri
 import { handler as verifyEmailHandler } from '../../src/verifyEmailFunction';
 import { asBunHandler } from './as-bun-handler';
 import { pushSchema } from './push-schema';
+// @ts-ignore
 
 type DevParams = {
   verbose?: boolean;
@@ -26,17 +27,34 @@ export default async function dev(params: DevParams = {}) {
   process.env['AWS_SESSION_TOKEN'] = 'mockSessionToken';
 
   const port = 3000;
+  const result = pushSchema({ verbose });
+  if (!result.success) {
+    console.error('Failed to push schema:', result.error);
+    process.exit(1);
+  }
 
-  pushSchema({ verbose });
+  console.log(`Starting Bun server on port ${port}. Try fetching http://localhost:${port}/ping`);
   Bun.serve({
+    hostname: '0.0.0.0',
     routes: {
       '/api/register': { POST: asBunHandler(registerHandler) },
       '/api/login': { POST: asBunHandler(loginHandler) },
       '/api/refresh-token': { POST: asBunHandler(refreshTokenFunction) },
       '/api/resend-verification-email': asBunHandler(resendVerificationEmailFunction),
       '/api/verify-email': asBunHandler(verifyEmailHandler),
+      '/ping': () => new Response('pong'),
     },
     port,
+    fetch: (_req) => {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        },
+      });
+    },
   });
 }
 

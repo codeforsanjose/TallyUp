@@ -3,7 +3,7 @@ import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 export const mockApiGatewayEvent = async <T extends string>(
   req: Bun.BunRequest<T>,
 ): Promise<APIGatewayProxyEventV2> => {
-  const body = await req.json();
+  const body = await req.text();
   const url = new URL(req.url);
 
   return {
