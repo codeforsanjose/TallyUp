@@ -1,5 +1,6 @@
 import { $, component$, type QRLEventHandlerMulti, useSignal } from '@builder.io/qwik';
-import { postRegister } from '../client';
+import { postRegister } from '../api';
+import { PrimaryButton } from './PrimaryButton';
 
 export const RegisterForm = component$(() => {
   const email = useSignal('');
@@ -11,18 +12,16 @@ export const RegisterForm = component$(() => {
 
   const onSubmit = $<QRLEventHandlerMulti<SubmitEvent, HTMLFormElement>>(async () => {
     const res = await postRegister({
-      body: {
-        email: email.value,
-        password: password.value,
-      },
+      email: email.value,
+      password: password.value,
     });
 
-    if (res.error) {
+    if (res.status !== 200) {
       status.value = {
-        message: res.error.message || 'Registration failed',
+        message: res.data.message || 'Registration failed',
         type: 'error',
       };
-      console.error('Registration error:', res.error);
+      console.error('Registration failed with status:', res.status);
       return;
     }
 
@@ -37,7 +36,7 @@ export const RegisterForm = component$(() => {
       <form
         action='/api/register'
         method='POST'
-        class='flex flex-col gap-4 p-4 rounded shadow-md'
+        class='flex flex-col gap-4 rounded p-4 shadow-md'
         onSubmit$={onSubmit}
         preventdefault:submit
       >
@@ -46,7 +45,7 @@ export const RegisterForm = component$(() => {
           name='email'
           type='text'
           placeholder='email'
-          class='p-2 border rounded'
+          class='rounded border p-2'
           onChange$={(e) => {
             email.value = (e.target as HTMLInputElement).value;
           }}
@@ -55,18 +54,16 @@ export const RegisterForm = component$(() => {
           name='password'
           type='password'
           placeholder='Password'
-          class='p-2 border rounded'
+          class='rounded border p-2'
           onChange$={(e) => {
             password.value = (e.target as HTMLInputElement).value;
           }}
         />
-        <button type='submit' class='p-2 bg-blue-500 rounded'>
-          Register
-        </button>
+        <PrimaryButton type='submit'>Register</PrimaryButton>
       </form>
       {status.value.message && (
         <div
-          class={`mt-4 p-2 rounded ${
+          class={`mt-4 rounded p-2 ${
             status.value.type === 'success'
               ? 'bg-green-100 text-green-800'
               : status.value.type === 'error'

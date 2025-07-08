@@ -1,37 +1,63 @@
-import type { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
-import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { client, userPool } from './cognito';
-import { buildResponse } from './lib';
-import { AuthRequestModel, type RegisterResponse } from './openapi';
-import assert from 'node:assert';
-import { safeParse } from './lib/safe-parse';
+// import { hash } from '@node-rs/argon2';
+import { signJwtToken } from './lib/auth';
+import { jwtKeyDependency, type RawJwtKeyDependency } from './lib/auth/jwt-key-dependency';
+import { drizzleDependency, type RawDrizzleDependency } from './lib/db';
+import { sendVerificationEmail } from './lib/email';
+import { buildHttpHandler, type Action } from './lib/lambda-utils';
+import { AuthRequestModel, type AuthRequest, type RegisterResponse } from './lib/openapi';
+import { hash } from '@node-rs/argon2';
+import { createSecretsManagerClient } from './lib/secrets';
 
-export const builder =
-  (client: CognitoIdentityProviderClient, poolClientId: string) =>
-  async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> => {
-    // Parse
-    if (!event.body) return buildResponse(400, { message: 'Request body is required' });
-    const parseResult = safeParse(AuthRequestModel, event.body);
-    if (!parseResult.success)
-      return buildResponse(400, { message: `Invalid request body: ${parseResult.error}` });
-    const { email, password } = parseResult.data;
+type RegisterDeps = RawDrizzleDependency & RawJwtKeyDependency;
 
-    // Register
-    const result = await userPool.beginSignUp({
-      client,
-      poolClientId,
-      Username: email,
-      Password: password,
-    });
-    if (!result.success) {
-      console.error('Error registering user:', result.error);
-      return buildResponse(400, { message: result.error.message });
-    }
+const register: Action<AuthRequest, RegisterResponse, RegisterDeps> = async (
+  { email, password },
+  { drizzle, jwtKey },
+  rawEvent,
+) => {
+  // Hash password
+  const passwordHash = await hash(password, {
+    algorithm: 2,
+    memoryCost: 65536, // 64 MB
+    timeCost: 4, // 4 iterations
+    parallelism: 1, // 1 thread
+  });
 
-    // OK
-    return buildResponse<RegisterResponse>(200, result.data);
+  // Insert user into the database
+  const { users } = drizzle._.fullSchema;
+  const query = await drizzle
+    .insert(users)
+    .values({ email, passwordHash, status: 'pending' })
+    .onConflictDoNothing()
+    .returning({ id: users.id });
+  const userId = query[0]?.id;
+  if (!userId)
+    return { success: false, error: new Error('This email is already registered with TallyUp!') };
+
+  // Send verification email
+  const verifyEmailToken = signJwtToken({ expiresIn: '15m', userId, jwtKey });
+  const { domainName, stage } = rawEvent.requestContext;
+  const result = await sendVerificationEmail({
+    destinationEmail: email,
+    domainName,
+    stage,
+    token: verifyEmailToken,
+  });
+  if (!result.success) return { success: false, error: result.error };
+
+  // Return success response
+  return {
+    success: true,
+    data: {
+      userId,
+      message: 'User registered successfully. Please check your email to verify your account.',
+    },
   };
+};
 
-const poolClientId = process.env['USER_POOL_CLIENT_ID'];
-assert(poolClientId, 'USER_POOL_CLIENT_ID is not set');
-export const handler = builder(client, poolClientId);
+const client = createSecretsManagerClient();
+export const handler = buildHttpHandler({
+  requestModel: AuthRequestModel,
+  action: register,
+  dependencies: [drizzleDependency(client), jwtKeyDependency(client)],
+});

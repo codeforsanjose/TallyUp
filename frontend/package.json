@@ -3,23 +3,29 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "scripts/build.ts",
   "scripts": {
-    "build": "tsc -b && vite build",
-    "dev": "vite",
-    "gen-client": "bun run scripts/gen-client.ts -- --reschema",
-    "postinstall": "bun run gen-client"
+    "build": "bun run scripts/build.ts",
+    "dev": "bun run scripts/dev.ts",
+    "gen-client": "bun run scripts/gen-client.ts -- --reschema"
   },
   "devDependencies": {
-    "@hey-api/client-fetch": "^0.10.2",
-    "@hey-api/openapi-ts": "^0.67.6",
     "@tailwindcss/vite": "^4.1.7",
+    "@types/yargs": "^17.0.33",
+    "msw": "^2.10.3",
+    "orval": "^7.10.0",
+    "prettier-plugin-tailwindcss": "^0.6.13",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
     "vite-plugin-pwa": "^1.0.0",
-    "yargs": "^17.7.2"
+    "yargs": "^17"
   },
   "dependencies": {
     "@builder.io/qwik": "^1.13.0",
-    "tailwindcss": "^4.1.7"
-  }
+    "tailwindcss": "^4.1.11",
+    "uuid": "^11.1.0"
+  },
+  "trustedDependencies": [
+    "@tailwindcss/oxide"
+  ]
 }

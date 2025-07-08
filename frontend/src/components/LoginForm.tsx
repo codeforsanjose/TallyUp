@@ -1,5 +1,6 @@
 import { $, component$, useSignal, type QRLEventHandlerMulti } from '@builder.io/qwik';
-import { postLogin } from '../client';
+import { postLogin } from '../api';
+import { PrimaryButton } from './PrimaryButton';
 export const LoginForm = component$(() => {
   const email = useSignal('');
   const password = useSignal('');
@@ -10,17 +11,16 @@ export const LoginForm = component$(() => {
 
   const onSubmit = $<QRLEventHandlerMulti<SubmitEvent, HTMLFormElement>>(async () => {
     const res = await postLogin({
-      body: {
-        email: email.value,
-        password: password.value,
-      },
+      email: email.value,
+      password: password.value,
     });
-    if (res.error) {
+
+    if (res.status !== 200) {
       status.value = {
-        message: res.error.message || 'Login failed',
+        message: res.data.message || 'Login failed',
         type: 'error',
       };
-      console.error('Login error:', res.error);
+      console.error('Login failed with status:', res.status);
       return;
     }
 
@@ -31,17 +31,13 @@ export const LoginForm = component$(() => {
   });
   return (
     <section>
-      <form
-        onSubmit$={onSubmit}
-        preventdefault:submit
-        class='flex flex-col gap-4 p-4 rounded shadow-md'
-      >
+      <form onSubmit$={onSubmit} preventdefault:submit class='flex flex-col gap-4 p-4'>
         <h2 class='text-xl font-bold'>Login</h2>
         <input
           name='email'
           type='text'
           placeholder='email'
-          class='p-2 border rounded'
+          class='rounded border p-2'
           onChange$={(e) => {
             email.value = (e.target as HTMLInputElement).value;
           }}
@@ -50,18 +46,16 @@ export const LoginForm = component$(() => {
           name='password'
           type='password'
           placeholder='Password'
-          class='p-2 border rounded'
+          class='rounded border p-2'
           onChange$={(e) => {
             password.value = (e.target as HTMLInputElement).value;
           }}
         />
-        <button type='submit' class='p-2 bg-blue-500 rounded'>
-          Login
-        </button>
+        <PrimaryButton type='submit'>Login</PrimaryButton>
       </form>
       {status.value.message && (
         <div
-          class={`mt-4 p-2 rounded ${
+          class={`mt-4 rounded p-2 ${
             status.value.type === 'success'
               ? 'bg-green-100 text-green-800'
               : status.value.type === 'error'
