@@ -43,7 +43,11 @@ export const verifyEmail: Action<VerifyEmailRequest, VerifyEmailResponse, Verify
 
   // Create session
   const refreshToken = signJwtToken({ userId: updatedUserId, jwtKey });
-  const { sessionId } = await createSession(drizzle, updatedUserId, refreshToken);
+  const { sessionId } = await createSession({
+    drizzle,
+    userId: updatedUserId,
+    nextRefreshToken: refreshToken,
+  });
   return {
     success: true,
     data: {

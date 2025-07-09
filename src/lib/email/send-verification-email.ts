@@ -1,12 +1,11 @@
 import { SESClient, SendEmailCommand, type SESClientConfig } from '@aws-sdk/client-ses';
-import type { Result } from '../types';
 
 type SendVerificationEmailParams = {
   destinationEmail: string;
   domainName: string;
   stage: string;
   token: string;
-  sesClient?: SESClient | SESClientConfig;
+  sesClient?: Pick<SESClient, 'send'> | SESClientConfig;
 };
 
 export const sendVerificationEmail = async ({
@@ -15,16 +14,16 @@ export const sendVerificationEmail = async ({
   sesClient,
   stage,
   token,
-}: SendVerificationEmailParams): Promise<Result<{ messageId: string }>> => {
+}: SendVerificationEmailParams): Promise<string> => {
   const verificationLink = `https://${domainName}/${stage}/api/verify-email?token=${token}`;
-  const client = sesClient instanceof SESClient ? sesClient : new SESClient(sesClient || {});
+  const client = !!sesClient && 'send' in sesClient ? sesClient : new SESClient(sesClient || {});
 
   if (process.env.NODE_ENV === 'development') {
     console.log(
       `Instead of sending an email, we are logging the verification link. Please append this to your baseUrl: /api/verify-email?token=${token}`,
     );
 
-    return { success: true, data: { messageId: 'mock-message-id-for-dev' } };
+    return 'mock-message-id-for-development';
   } else {
     const result = await client.send(
       new SendEmailCommand({
@@ -46,7 +45,9 @@ export const sendVerificationEmail = async ({
     );
     const { MessageId } = result;
     if (!MessageId)
-      return { success: false, error: new Error('Failed to send verification email') };
-    return { success: true, data: { messageId: MessageId } };
+      throw new Error(
+        "SendEmail never returns an undefined MessageId, it'd throw an error instead",
+      );
+    return MessageId;
   }
 };

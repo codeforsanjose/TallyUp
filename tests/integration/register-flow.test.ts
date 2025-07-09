@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import { makeApiRequest } from './make-api-request';
 import type { RegisterResponse } from '../../src/lib/openapi';
 import { client } from './db-client';
@@ -13,6 +13,16 @@ const makeRegisterRequest = (data: Record<string, any>) => {
     },
   });
 };
+
+beforeAll(async () => {
+  // Clear the users table before tests
+  await client.delete(client._.fullSchema.users);
+});
+
+afterAll(async () => {
+  // Clean up the users table after tests
+  await client.delete(client._.fullSchema.users);
+});
 
 describe('Register Flow', () => {
   it("doesn't store invalid credentials", async () => {

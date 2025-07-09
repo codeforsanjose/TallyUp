@@ -16,9 +16,7 @@ export const createConfigParams = (cfgOverrides?: CreateOrvalConfigParams): Conf
         target: './sdk.ts',
         schemas: './schemas',
       },
-      input: {
-        target: 'https://dzba2wy5ier7s.cloudfront.net/api/openapi.yaml',
-      },
+      input: { target: path.resolve(__dirname, './openapi.yaml') },
     },
   };
 };

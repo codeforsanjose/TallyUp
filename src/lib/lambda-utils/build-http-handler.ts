@@ -4,8 +4,9 @@ import type { z } from 'zod';
 import type { BaseResponse } from '../openapi';
 import type { Result } from '../types';
 import { buildResponse } from './build-response';
-import { parseEvent } from './parse-event';
-import { cleanEnv, type Dependency } from './types';
+import { parseEvent, type ParseEventFn } from './parse-event';
+import { cleanEnv } from './clean-env';
+import type { Dependency } from './types';
 
 type ApiEventHandler = (
   event: APIGatewayProxyEventV2,
@@ -58,63 +59,73 @@ type BuildHttpHandlerParams<
   dependencies: Dependency<Partial<RawDeps>, readonly RequiredEnv[number][]>[];
 };
 
-export const buildHttpHandler = <
-  T extends Record<string, unknown>,
-  V extends BaseResponse,
-  Deps extends Record<string, unknown>,
-  RequiredEnv extends readonly string[] = readonly string[],
->(
-  params: BuildHttpHandlerParams<T, V, Deps, RequiredEnv>,
-): ApiEventHandler => {
-  const { requestModel, action, dependencies } = params;
-  const env = cleanEnv(dependencies);
+export const buildHttpHandlerFactory = (parseEventFn: ParseEventFn) => {
+  return <
+    T extends Record<string, unknown>,
+    V extends BaseResponse,
+    Deps extends Record<string, unknown>,
+    RequiredEnv extends readonly string[] = readonly string[],
+  >(
+    params: BuildHttpHandlerParams<T, V, Deps, RequiredEnv>,
+  ): ApiEventHandler => {
+    const { requestModel, action, dependencies } = params;
+    const env = cleanEnv(dependencies);
 
-  return async (event) => {
-    try {
-      const {
-        pathParameters,
-        queryStringParameters,
-        requestContext: {
-          http: { method },
-        },
-        body,
-      } = event;
-      assert(
-        method === 'GET' ||
-          method === 'POST' ||
-          method === 'PUT' ||
-          method === 'DELETE' ||
-          method === 'PATCH',
-        `Unsupported HTTP method: ${method}`,
-      );
-      const result = parseEvent({
-        requestModel,
-        pathParameters,
-        queryStringParameters,
-        body,
-        method,
-      });
-      if (!result.success) {
-        console.error(`Event parsing failed: ${result.error.message}`);
-        return buildResponse(400, { message: result.error.message });
+    return async (event) => {
+      try {
+        const {
+          pathParameters,
+          queryStringParameters,
+          requestContext: {
+            http: { method },
+          },
+          body,
+        } = event;
+        if (
+          !(
+            method === 'GET' ||
+            method === 'POST' ||
+            method === 'PUT' ||
+            method === 'DELETE' ||
+            method === 'PATCH'
+          )
+        ) {
+          return buildResponse(405, {
+            message: `Method ${method} not allowed. Supported methods are GET, POST, PUT, DELETE, PATCH.`,
+          });
+        }
+
+        const result = parseEventFn({
+          requestModel,
+          pathParameters,
+          queryStringParameters,
+          body,
+          method,
+        });
+        if (!result.success) {
+          console.error(`Event parsing failed: ${result.error.message}`);
+          return buildResponse(400, { message: result.error.message });
+        }
+
+        // Execute action
+        const actionWithDeps = await buildAction(action, dependencies, env);
+        const actionResult = await actionWithDeps(result.data as T, event);
+        if (!actionResult.success) {
+          console.log(
+            `Action failed: ${actionResult.error.message}\n\n\nCause:\n${actionResult.error.cause}\n\n\nStack:\n${actionResult.error.stack}`,
+          );
+          return buildResponse(400, { message: actionResult.error.message });
+        }
+
+        // Build response
+        return buildResponse(200, actionResult.data);
+      } catch (error) {
+        assert(error instanceof Error, 'How was error not an instance of Error?');
+        console.error(`Cause:\n ${error.cause}\n---------\nStack:\n ${error.stack}`);
+        throw error; // Re-throw to be handled by AWS Lambda
       }
-
-      // Execute action
-      const actionWithDeps = await buildAction(action, dependencies, env);
-      const actionResult = await actionWithDeps(result.data as T, event);
-      if (!actionResult.success) {
-        console.log(
-          `Action failed: ${actionResult.error.message}\n\n\nCause:\n${actionResult.error.cause}\n\n\nStack:\n${actionResult.error.stack}`,
-        );
-        return buildResponse(400, { message: actionResult.error.message });
-      }
-
-      // Build response
-      return buildResponse(200, actionResult.data);
-    } catch (error) {
-      assert(error instanceof Error, 'How was error not an instance of Error?');
-      console.error(`Cause:\n ${error.cause}\n---------\nStack:\n ${error.stack}`);
-      throw error; // Re-throw to be handled by AWS Lambda
-    }
+    };
   };
 };
+
+export const buildHttpHandler = buildHttpHandlerFactory(parseEvent);

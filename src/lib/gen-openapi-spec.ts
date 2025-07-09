@@ -12,6 +12,8 @@ import {
   RefreshTokenRequestModel,
   RefreshTokenResponseModel,
   RegisterResponseModel,
+  VerifyEmailRequestModel,
+  VerifyEmailResponseModel,
 } from './openapi';
 export const generateOpenApiSpec = async (): Promise<string> => {
   extendZodWithOpenApi(z);
@@ -135,6 +137,32 @@ export const generateOpenApiSpec = async (): Promise<string> => {
         content: {
           'application/json': {
             schema: OpenApiBaseResponseModel,
+          },
+        },
+      },
+      '400': {
+        description: 'Invalid request',
+        content: {
+          'application/json': {
+            schema: OpenApiBaseResponseModel,
+          },
+        },
+      },
+    },
+  });
+
+  registry.registerPath({
+    method: 'get',
+    path: '/verify-email',
+    request: {
+      query: VerifyEmailRequestModel.openapi('VerifyEmailRequestModel'),
+    },
+    responses: {
+      '200': {
+        description: 'Email verified successfully',
+        content: {
+          'application/json': {
+            schema: VerifyEmailResponseModel.openapi('VerifyEmailResponseModel'),
           },
         },
       },

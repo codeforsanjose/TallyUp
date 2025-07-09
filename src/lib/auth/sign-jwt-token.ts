@@ -8,11 +8,11 @@ type GenerateRefreshTokenParams = {
 };
 
 export const signJwtToken = (params: GenerateRefreshTokenParams): string => {
-  const { expiresIn, userId, jwtKey: secretKey, ...rest } = params;
+  const { expiresIn, userId, jwtKey } = params;
 
   return jwt.sign(
-    { userId, ...rest }, // Include userId and any additional properties in the payload
-    secretKey,
+    { userId }, // Include userId and any additional properties in the payload
+    jwtKey,
     { expiresIn: expiresIn || '1y' }, // Set the expiration time for the refresh token
   );
 };

@@ -16,9 +16,9 @@ export const drizzleDependency = (secrets?: SecretsManagerClient | SecretsManage
   createDependency(
     async (env) => {
       if (process.env.NODE_ENV === 'development') {
+        // https://github.com/TimoWilhelm/local-neon-http-proxy
         neonConfig.useSecureWebSocket = false;
         neonConfig.wsProxy = (host) => `${host}:4444/v1`;
-
         const connectionString = 'postgres://postgres:postgres@db.localtest.me:5432';
         if (!connectionString)
           throw new Error('DATABASE_URL is not defined in environment variables');
@@ -28,15 +28,16 @@ export const drizzleDependency = (secrets?: SecretsManagerClient | SecretsManage
         };
       }
 
-      const secretName = env['DB_URL_SECRET_ARN'];
-      if (!secretName)
+      // NODE_ENV is production
+      const dbSecretArn = env['DB_URL_SECRET_ARN'];
+      if (!dbSecretArn)
         throw new Error(
           "DB_URL_SECRET_ARN is not defined in environment variables, but this should've been caught by cleanEnv",
         );
 
       const client =
         secrets instanceof SecretsManagerClient ? secrets : new SecretsManagerClient(secrets || {});
-      const response = await getSecretValue(client, secretName);
+      const response = await getSecretValue(client, dbSecretArn);
 
       const drizzleClient = drizzle(new Pool({ connectionString: response }), {
         casing: 'snake_case',

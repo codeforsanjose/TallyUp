@@ -1,12 +1,5 @@
 import { getEnv } from '../env';
-
-export type Dependency<
-  T extends Record<string, unknown> = Record<string, unknown>,
-  R extends readonly string[] = readonly string[],
-> = {
-  strategy: (env: Record<string, string | undefined>) => Promise<T>;
-  requiredEnv: R;
-};
+import type { Dependency } from './types';
 
 export const cleanEnv = <T extends readonly string[]>(
   dependencies: Dependency<Record<string, unknown>, T>[],
