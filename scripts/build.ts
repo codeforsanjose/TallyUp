@@ -19,7 +19,7 @@ export type BuildConfig = {
 
 const DEFAULTS: Required<BuildConfig> = {
   frontend: true,
-  globPatterns: ['./src/*Function.ts'],
+  globPatterns: ['./src/*-function.ts'],
   verbose: false,
 };
 
@@ -57,6 +57,8 @@ const bunBuild = async (entrypoints: string[]): Promise<Result<Bun.BuildOutput[]
   const failed = results
     .filter((result) => result.status === 'rejected')
     .map((result, i) => {
+      console.error(`Build failed for entry: ${entrypoints[i]}`);
+      console.error(result.reason);
       return [entrypoints[i], result.reason];
     });
   if (failed.length > 0) {

@@ -7,7 +7,7 @@ export const users = pgTable('users', {
   id: uuid().primaryKey().defaultRandom(),
   email: text().notNull().unique(),
   passwordHash: text().notNull(),
-  status: userStatus().notNull(),
+  status: userStatus().notNull().default('pending'),
 });
 
 export const usersRelation = relations(users, ({ many }) => ({

@@ -12,6 +12,8 @@ type BuildConfig = {
 };
 
 export const build = async (configOverride: BuildConfig) => {
+  console.log('Starting build process...');
+
   const defaults: Required<BuildConfig> = {
     genClient: false,
     genClientBaseUrl: null,
@@ -34,8 +36,11 @@ export const build = async (configOverride: BuildConfig) => {
         emptyOutDir: true,
         outDir,
       },
+      logLevel: verbose ? 'info' : 'error',
       ...ViteConfig,
     });
+
+    console.log(`Build completed successfully. Output directory: ${outDir}`);
   } catch (error) {
     assert(error instanceof Error, 'Build failed with an unexpected error type');
     if (error.message.includes('../client')) {

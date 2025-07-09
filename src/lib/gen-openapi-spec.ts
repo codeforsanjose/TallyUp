@@ -7,12 +7,11 @@ import { stringify } from 'yaml';
 import { z } from 'zod';
 import {
   AuthRequestModel,
-  LoginResponseModel,
   BaseResponseModel,
-  RegisterResponseModel,
-  VerifyEmailResponseModel,
+  LoginResponseModel,
   RefreshTokenRequestModel,
   RefreshTokenResponseModel,
+  RegisterResponseModel,
 } from './openapi';
 export const generateOpenApiSpec = async (): Promise<string> => {
   extendZodWithOpenApi(z);
@@ -148,30 +147,6 @@ export const generateOpenApiSpec = async (): Promise<string> => {
         },
       },
     },
-  });
-
-  registry.registerPath({
-    method: 'get',
-    path: '/verify',
-    responses: {
-      '200': {
-        description: 'Verification successful',
-        content: {
-          'application/json': {
-            schema: VerifyEmailResponseModel.openapi('VerifyResponseModel'),
-          },
-        },
-      },
-      '400': {
-        description: 'Invalid request',
-        content: {
-          'application/json': {
-            schema: OpenApiBaseResponseModel,
-          },
-        },
-      },
-    },
-    request: { query: VerifyEmailResponseModel.openapi('VerifyResponseModel') },
   });
 
   const result = new OpenApiGeneratorV31(registry.definitions).generateDocument({

@@ -1,10 +1,10 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { handler as loginHandler } from '../../src/loginFunction';
-import { handler as refreshTokenFunction } from '../../src/refreshTokenFunction';
-import { handler as registerHandler } from '../../src/registerFunction';
-import { handler as resendVerificationEmailFunction } from '../../src/resendVerificationEmailFunction';
-import { handler as verifyEmailHandler } from '../../src/verifyEmailFunction';
+import { handler as loginHandler } from '../../src/login-function';
+import { handler as refreshTokenFunction } from '../../src/refresh-token-function';
+import { handler as registerHandler } from '../../src/register-function';
+import { handler as resendVerificationEmailFunction } from '../../src/resend-verification-email-function';
+import { handler as verifyEmailHandler } from '../../src/verify-email-function';
 import { asBunHandler } from './as-bun-handler';
 import { pushSchema } from './push-schema';
 // @ts-ignore

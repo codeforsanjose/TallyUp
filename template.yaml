@@ -8,7 +8,7 @@ Parameters:
   CustomDomainName:
     Type: String
     Description: Custom domain name for the API
-    Default: tallyup.opensourcesanjose.org
+    Default: ""
   CustomDomainCertificateArn:
     Type: String
     Description: ARN of the ACM certificate for the custom domain
@@ -28,6 +28,13 @@ Globals:
     LoggingConfig:
       LogGroup: !Sub "/aws/lambda/${AWS::StackName}"
 
+Conditions:
+  HasCustomDomain:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref CustomDomainName
+          - ""
+
 Resources:
   apiMain:
     Type: AWS::Serverless::HttpApi
@@ -42,10 +49,18 @@ Resources:
       ContentUri: ./layers/argon2/argon2-layer.zip
       CompatibleRuntimes:
         - nodejs22.x
+  apiAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./dist/build/api-authorizer-function
+      Handler: index.handler
+      Runtime: nodejs22.x
+      MemorySize: 128
+      Timeout: 100
   openApiFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./dist/build/openapiFunction
+      CodeUri: ./dist/build/openapi-function
       Events:
         ApiEvent:
           Type: HttpApi
@@ -57,7 +72,7 @@ Resources:
   loginFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./dist/build/loginFunction
+      CodeUri: ./dist/build/login-function
       Events:
         ApiEvent:
           Type: HttpApi
@@ -76,7 +91,7 @@ Resources:
   refreshTokenFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./dist/build/refreshTokenFunction
+      CodeUri: ./dist/build/refresh-token-function
       Events:
         ApiEvent:
           Type: HttpApi
@@ -93,7 +108,7 @@ Resources:
   registerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./dist/build/registerFunction
+      CodeUri: ./dist/build/register-function
       Events:
         ApiEvent:
           Type: HttpApi
@@ -113,7 +128,7 @@ Resources:
   resendVerificationEmailFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./dist/build/resendVerificationEmailFunction
+      CodeUri: ./dist/build/resend-verification-email-function
       Events:
         ApiEvent:
           Type: HttpApi
@@ -131,7 +146,7 @@ Resources:
   verifyEmailFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./dist/build/verifyEmailFunction
+      CodeUri: ./dist/build/verify-email-function
       Events:
         ApiEvent:
           Type: HttpApi
@@ -175,7 +190,7 @@ Resources:
     Properties:
       DistributionConfig:
         Aliases:
-          - !Ref CustomDomainName
+          - !If [HasCustomDomain, !Ref CustomDomainName, !Ref "AWS::NoValue"]
         Origins:
           - Id: indexDotHtml
             CustomOriginConfig:
@@ -214,11 +229,12 @@ Resources:
           CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
           OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac # AllViewerExceptHostHeader
         PriceClass: PriceClass_100
-        ViewerCertificate:
-          AcmCertificateArn: !Ref CustomDomainCertificateArn
-          MinimumProtocolVersion: TLSv1.2_2021
-          SslSupportMethod: sni-only
-
+        ViewerCertificate: !If
+          - HasCustomDomain
+          - AcmCertificateArn: !Ref CustomDomainCertificateArn
+            MinimumProtocolVersion: TLSv1.2_2021
+            SslSupportMethod: sni-only
+          - !Ref "AWS::NoValue"
   dbConnectionSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -236,7 +252,45 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/lambda/${AWS::StackName}"
       RetentionInDays: 1 # TODO: Set to 7 or 14 days for production
-
+  tallyUpGithubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: arn:aws:iam::253016134262:oidc-provider/token.actions.githubusercontent.com
+            Action:
+              - sts:AssumeRoleWithWebIdentity
+              - sts:TagSession
+            Condition:
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  - repo:codeforsanjose/TallyUp:ref:refs/heads/main
+              ForAllValues:StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:iss: https://token.actions.githubusercontent.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Policies:
+        - PolicyName: DenyEc2Access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Deny
+                Action:
+                  - ec2:*
+                  - glue:*
+                  - sagemaker:*
+                  - athena:*
+                  - emr:*
+                  - redshift:*
+                  - kinesis:*
+                  - redshift:*
+                  - rds:*
+                  - dynamodb:*
+                Resource: "*"
 Outputs:
   S3BucketName:
     Description: S3 bucket name for index.html
