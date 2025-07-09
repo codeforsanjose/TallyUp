@@ -1,0 +1,39 @@
+name: Deploy on Push to Main Branch
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 'latest'
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Build Project
+        run: bun run build -v
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::253016134262:role/tally-up-backend-tallyUpGithubActionsRole-HnKKldRYNDhZ
+          aws-region: us-west-2
+
+      - name: Deploy
+        run: bun run deploy -v
+
+permissions:
+  id-token: write
+  contents: read

@@ -2,10 +2,7 @@ import { z } from 'zod';
 import { BaseResponseModel } from './base-response';
 
 export const AuthRequestModel = z.object({
-  email: z
-    .string()
-    .min(1, 'email is required')
-    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email format'),
+  email: z.string().email('Invalid email address'),
   password: z
     .string()
     .min(1, 'Password is required')

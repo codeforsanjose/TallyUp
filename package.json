@@ -29,6 +29,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/yargs": "^17.0.33",
     "archiver": "^7.0.1",
+    "docker-compose": "^1.2.0",
     "drizzle-kit": "^0.31.4",
     "nodemon": "^3.1.10",
     "pg": "^8.16.3",
@@ -37,25 +38,15 @@
     "yargs": "^17"
   },
   "scripts": {
-    "build": "bun run scripts/build.ts",
-    "dev": "NODE_ENV=development DATABASE_URL='postgres://postgres:postgres@db.localtest.me:5432' bun --hot run scripts/dev/index.ts ",
-    "dev:docker": "NODE_ENV=development DATABASE_URL='postgres://postgres:postgres@db:5432' bun --hot run scripts/dev/index.ts ",
+    "build": "NODE_ENV=production bun run scripts/build.ts",
     "deploy": "bun run scripts/deploy",
-    "gen-spec": "bun run scripts/gen-spec.ts",
+    "dev:docker": "NODE_ENV=development DATABASE_URL='postgres://postgres:postgres@db:5432' bun --hot run scripts/dev/index.ts ",
+    "dev": "NODE_ENV=development DATABASE_URL='postgres://postgres:postgres@db.localtest.me:5432' bun --hot run scripts/dev/index.ts ",
+    "dx-tests": "bun test tests/dx",
     "format": "bun run prettier --write .",
+    "gen-spec": "bun run scripts/gen-spec.ts",
+    "integration-tests": "bun run scripts/integration-tests.ts",
     "postinstall": "bun run scripts/postinstall",
     "push-schema": "DATABASE_URL=postgres://postgres:postgres@db.localtest.me:5432 bunx drizzle-kit push"
-  },
-  "jest": {
-    "testMatch": [
-      "**/__tests__/**/*.[jt]s?(x)",
-      "**/?(*.)+(spec|test).[jt]s?(x)",
-      "**/__tests__/**/*.mjs?(x)",
-      "**/?(*.)+(spec|test).mjs?(x)"
-    ],
-    "moduleFileExtensions": [
-      "mjs",
-      "js"
-    ]
   }
 }

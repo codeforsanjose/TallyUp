@@ -8,7 +8,6 @@ type DeployConfig = {
   frontend?: boolean;
   profile?: string | undefined;
   staticDir?: string;
-  validate?: boolean;
   verbose?: boolean;
 };
 
@@ -16,38 +15,18 @@ const defaultConfig: Required<Omit<DeployConfig, 'profile'>> = {
   backend: true,
   frontend: true,
   staticDir: path.resolve(__dirname, '../../dist/frontend'),
-  validate: true,
   verbose: false,
 };
 
 export const deploy = async (configOveride: DeployConfig) => {
-  const { backend, frontend, staticDir, validate, verbose, profile } = {
-    ...defaultConfig,
-    ...configOveride,
-  };
+  const config = { ...defaultConfig, ...configOveride };
+  const { backend, frontend, staticDir, verbose, profile } = config;
 
-  if (verbose)
-    console.log('Deployment started using options:', {
-      profile,
-      staticDir,
-      verbose,
-    });
+  if (verbose) {
+    console.log('Deployment started using options:', config);
+  }
+
   const logLevel = verbose ? 'inherit' : 'pipe';
-  if (validate) {
-    if (verbose) console.log('Validating SAM template...');
-    const validateProcess = Bun.spawn({
-      cmd: ['sam', 'validate'],
-      stdout: logLevel,
-      stderr: logLevel,
-    });
-    if ((await validateProcess.exited) !== 0) {
-      console.error('SAM validation failed:', await new Response(validateProcess.stderr).text());
-      process.exit(1);
-    }
-
-    if (verbose) console.log('Validation successful, proceeding with deployment...');
-  } else if (verbose) console.log('Skipping SAM template validation as per --validate=false');
-
   if (!backend) {
     if (verbose) console.log('Skipping backend deploy from --backend=false');
   } else {
@@ -121,15 +100,11 @@ if (import.meta.main) {
       type: 'string',
       description: 'AWS profile to use for deployment',
     })
-    .option('validate', {
-      type: 'boolean',
-      description: 'Validate the SAM template before deployment',
-      default: true,
-    })
     .option('verbose', {
       type: 'boolean',
       description: 'Enable verbose output',
       default: false,
+      alias: 'v',
     })
     .parseSync();
 
