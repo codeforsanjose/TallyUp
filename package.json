@@ -40,8 +40,6 @@
   "scripts": {
     "build": "NODE_ENV=production bun run scripts/build.ts",
     "deploy": "bun run scripts/deploy",
-    "dev:docker": "NODE_ENV=development DATABASE_URL='postgres://postgres:postgres@db:5432' bun --hot run scripts/dev/index.ts ",
-    "dev": "NODE_ENV=development DATABASE_URL='postgres://postgres:postgres@db.localtest.me:5432' bun --hot run scripts/dev/index.ts ",
     "dx-tests": "bun test tests/dx",
     "format": "bun run prettier --write .",
     "gen-spec": "bun run scripts/gen-spec.ts",

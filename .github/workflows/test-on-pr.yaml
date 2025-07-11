@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Run unit tests
+        run: bun test tests/unit
+
       - name: Run integration tests
         env:
           COMPOSE_PROJECT_NAME: dx-test

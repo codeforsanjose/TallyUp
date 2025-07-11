@@ -42,7 +42,7 @@ const login: Action<AuthRequest, LoginResponse, LoginDependencies> = async (
 
   // Create session
   const refreshToken = signJwtToken({ userId, jwtKey });
-  const { sessionId } = await createSession(drizzle, userId, refreshToken);
+  const { sessionId } = await createSession({ drizzle, userId, nextRefreshToken: refreshToken });
 
   return {
     success: true,

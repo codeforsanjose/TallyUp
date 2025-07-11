@@ -1,17 +1,23 @@
 import { desc, eq, inArray } from 'drizzle-orm';
 import type { RawDrizzleDependency } from './client';
 
+type CreateSessionParams = {
+  drizzle: Pick<RawDrizzleDependency['drizzle'], 'insert' | 'transaction' | '_'>;
+  userId: string;
+  nextRefreshToken: string;
+};
+
 /**
  * Creates a new session for the user, ensuring that the user has less than 5 active sessions.
  * If the user has 5 or more active sessions, it deletes the oldest sessions until only 4 remain.
  * Throws an error if the session creation fails.
  *
  **/
-export const createSession = async (
-  drizzle: RawDrizzleDependency['drizzle'],
-  userId: string,
-  nextRefreshToken: string,
-): Promise<{ sessionId: string }> => {
+export const createSession = async ({
+  drizzle,
+  userId,
+  nextRefreshToken,
+}: CreateSessionParams): Promise<{ sessionId: string }> => {
   const sessionsTable = drizzle._.fullSchema.sessions;
 
   // Ensure user has less than 5 active sessions
@@ -33,20 +39,17 @@ export const createSession = async (
         ),
       );
     }
-
+    const insertResult = await tx
+      .insert(sessionsTable)
+      .values({
+        userId,
+        nextRefreshToken,
+      })
+      .returning({
+        sessionId: sessionsTable.id,
+      });
     // Create new session
-    const { sessionId } =
-      (
-        await drizzle
-          .insert(sessionsTable)
-          .values({
-            userId,
-            nextRefreshToken,
-          })
-          .returning({
-            sessionId: sessionsTable.id,
-          })
-      )[0] || {};
+    const sessionId = insertResult[0]?.sessionId;
 
     if (!sessionId) throw new Error('Failed to create session');
 

@@ -37,13 +37,12 @@ const register: Action<AuthRequest, RegisterResponse, RegisterDeps> = async (
   // Send verification email
   const verifyEmailToken = signJwtToken({ expiresIn: '15m', userId, jwtKey });
   const { domainName, stage } = rawEvent.requestContext;
-  const result = await sendVerificationEmail({
+  const messageId = await sendVerificationEmail({
     destinationEmail: email,
     domainName,
     stage,
     token: verifyEmailToken,
   });
-  if (!result.success) return { success: false, error: result.error };
 
   // Return success response
   return {
@@ -51,6 +50,7 @@ const register: Action<AuthRequest, RegisterResponse, RegisterDeps> = async (
     data: {
       userId,
       message: 'User registered successfully. Please check your email to verify your account.',
+      messageId,
     },
   };
 };

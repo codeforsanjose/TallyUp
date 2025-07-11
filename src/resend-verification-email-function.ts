@@ -29,19 +29,19 @@ export const resendVerificationEmail: Action<
   // Send verification email
   const verificationToken = signJwtToken({ userId: email, jwtKey });
   const { domainName, stage } = rawEvent.requestContext;
-  const result = await sendVerificationEmail({
+  const messageId = await sendVerificationEmail({
     destinationEmail: user.email,
     domainName,
     stage,
     token: verificationToken,
   });
-  if (!result.success) return { success: false, error: result.error };
 
   // Return success response
   return {
     success: true,
     data: {
       message: 'Verification email sent successfully',
+      messageId,
     },
   };
 };
