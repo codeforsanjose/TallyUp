@@ -6,14 +6,14 @@ export const pushSchema = (params: {
   if (!connectionString) throw new Error('DATABASE_URL is not defined in environment variables');
   const ioString = verbose ? 'inherit' : 'pipe';
   // Then use bunx drizzle-kit push to push the schema to the database
-  const pushProcess = Bun.spawnSync(['bunx', 'drizzle-kit', 'push'], {
+  const pushProcess = Bun.spawnSync(['bunx', 'drizzle-kit', 'push', '--force', '--strict=false'], {
     cwd: process.cwd(),
     env: {
       ...(process.env as Record<string, string>),
       DATABASE_URL: connectionString,
     },
     stderr: 'pipe',
-    stdout: ioString,
+    stdout: 'inherit',
   });
   const errorMaybe = pushProcess.stderr.toString();
   if (errorMaybe) {

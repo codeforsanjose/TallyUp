@@ -1,11 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
-import { makeApiRequest } from './make-api-request';
-import type { RegisterResponse } from '../../src/lib/openapi';
-import { client } from './db-client';
 import { count } from 'drizzle-orm';
+import type { RegisterResponseModel } from '../../src/gen/zod/schemas.ts';
+import { client } from './db-client';
+import { makeApiRequest } from './make-api-request';
 
 const makeRegisterRequest = (data: Record<string, any>) => {
-  return makeApiRequest<RegisterResponse>({
+  return makeApiRequest<RegisterResponseModel>({
     path: '/api/register',
     options: {
       body: data,
@@ -37,7 +37,7 @@ describe('Register Flow', () => {
       email: 'email@email.com',
       password: 'ValidPassword1!',
     });
-    expect(result.status).toBe(200);
+    expect(result.status).toBe(201);
     expect(result.body.userId).toBeDefined();
     const countResult = await client.select({ count: count() }).from(client._.fullSchema.users);
     expect(countResult[0]!.count).toBe(1);

@@ -1,63 +1,102 @@
-// import { hash } from '@node-rs/argon2';
-import { signJwtToken } from './lib/auth';
-import { jwtKeyDependency, type RawJwtKeyDependency } from './lib/auth/jwt-key-dependency';
-import { drizzleDependency, type RawDrizzleDependency } from './lib/db';
-import { sendVerificationEmail } from './lib/email';
-import { buildHttpHandler, type Action } from './lib/lambda-utils';
-import { AuthRequestModel, type AuthRequest, type RegisterResponse } from './lib/openapi';
 import { hash } from '@node-rs/argon2';
-import { createSecretsManagerClient } from './lib/secrets';
+import type { BaseResponseModel } from '../frontend/src/api';
+import type { RegisterResponseModel } from './gen/zod/schemas.ts';
+import { postRegisterBody } from './gen/zod/tally-up-api';
+import { getJwtKey } from './lib/auth/get-jwt-key.ts';
+import { signVerificationToken } from './lib/auth/tokens.ts';
+import { getDbClient } from './lib/db';
+import { fakeSendVerificationEmail, sendVerificationEmail } from './lib/email.ts';
+import { buildHttpHandlerV2, type ActionResult } from './lib/lambda-utils/build-http-handler-v2';
+import {
+  defineGetDependenciesFn,
+  mergeDependencies,
+} from './lib/lambda-utils/build-http-handler-v2/dependencies';
+import { parseEventDependency } from './lib/lambda-utils/build-http-handler-v2/parse-event-dependency';
+import { fakeGetSecretValue, getSecretValue } from './lib/secrets.ts';
 
-type RegisterDeps = RawDrizzleDependency & RawJwtKeyDependency;
+const registerDependencies = mergeDependencies(
+  parseEventDependency({
+    body: postRegisterBody,
+  }),
+  defineGetDependenciesFn(async (event) => {
+    const { DB_URL_SECRET_ARN, JWT_SECRET_ARN } = process.env;
+    if (!DB_URL_SECRET_ARN || !JWT_SECRET_ARN) {
+      throw new Error(
+        'DB_URL_SECRET_ARN or JWT_SECRET_ARN is not defined in environment variables',
+      );
+    }
+    const client = await getDbClient({
+      dbSecretArn: DB_URL_SECRET_ARN,
+      getSecretValue: process.env.NODE_ENV === 'production' ? getSecretValue : fakeGetSecretValue,
+    });
 
-const register: Action<AuthRequest, RegisterResponse, RegisterDeps> = async (
-  { email, password },
-  { drizzle, jwtKey },
-  rawEvent,
-) => {
-  // Hash password
-  const passwordHash = await hash(password, {
-    algorithm: 2,
-    memoryCost: 65536, // 64 MB
-    timeCost: 4, // 4 iterations
-    parallelism: 1, // 1 thread
-  });
+    return {
+      insertUser: async (data: { email: string; passwordHash: string }) => {
+        const result = await client
+          .insert(client._.fullSchema.users)
+          .values({
+            email: data.email,
+            passwordHash: data.passwordHash,
+            status: 'pending',
+            role: 'volunteer', // TODO: Make this configurable
+          })
+          .onConflictDoNothing()
+          .returning({ id: client._.fullSchema.users.id });
 
-  // Insert user into the database
-  const { users } = drizzle._.fullSchema;
-  const query = await drizzle
-    .insert(users)
-    .values({ email, passwordHash, status: 'pending' })
-    .onConflictDoNothing()
-    .returning({ id: users.id });
-  const userId = query[0]?.id;
-  if (!userId)
-    return { success: false, error: new Error('This email is already registered with TallyUp!') };
+        const user = result[0];
+        if (!user) return;
+        // Send verification email
+        const token = await signVerificationToken({
+          userId: user.id,
+          jwtKey: await getJwtKey({
+            jwtSecretArn: JWT_SECRET_ARN,
+            getSecretValue:
+              process.env.NODE_ENV === 'production' ? getSecretValue : fakeGetSecretValue,
+          }),
+        });
+        await (
+          process.env.NODE_ENV === 'production' ? sendVerificationEmail : fakeSendVerificationEmail
+        )({
+          destinationEmail: data.email,
+          token,
+          event,
+        });
 
-  // Send verification email
-  const verifyEmailToken = signJwtToken({ expiresIn: '15m', userId, jwtKey });
-  const { domainName, stage } = rawEvent.requestContext;
-  const messageId = await sendVerificationEmail({
-    destinationEmail: email,
-    domainName,
-    stage,
-    token: verifyEmailToken,
-  });
+        return {
+          userId: user.id,
+        };
+      },
+    };
+  }),
+);
 
-  // Return success response
-  return {
-    success: true,
-    data: {
-      userId,
-      message: 'User registered successfully. Please check your email to verify your account.',
-      messageId,
-    },
-  };
-};
+export const handler = buildHttpHandlerV2({
+  getDependencies: registerDependencies,
+  action: async (deps): Promise<ActionResult<RegisterResponseModel | BaseResponseModel>> => {
+    const { parsedEvent, insertUser } = deps;
+    if (!parsedEvent.success) {
+      return {
+        statusCode: 400,
+        body: { message: parsedEvent.error.message },
+      };
+    }
 
-const client = createSecretsManagerClient();
-export const handler = buildHttpHandler({
-  requestModel: AuthRequestModel,
-  action: register,
-  dependencies: [drizzleDependency(client), jwtKeyDependency(client)],
+    const { email, password } = parsedEvent.data.body;
+    const passwordHash = await hash(password);
+    const result = await insertUser({ email, passwordHash });
+    if (!result) {
+      return {
+        statusCode: 409,
+        body: { message: 'User with this email already exists.' },
+      };
+    }
+
+    return {
+      statusCode: 201,
+      body: {
+        message: 'User registered successfully. Please check your email to verify your account.',
+        userId: result.userId,
+      },
+    };
+  },
 });

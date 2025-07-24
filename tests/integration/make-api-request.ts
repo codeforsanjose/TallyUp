@@ -4,11 +4,13 @@ type MakeApiRequestParams = {
     | {
         method: 'GET';
         query: Record<string, string>;
+        headers?: Record<string, string>;
         body?: never;
       }
     | {
         method: 'POST' | 'PUT' | 'DELETE';
         body: Record<string, unknown>;
+        headers?: Record<string, string>;
         query?: never;
       };
 };
@@ -18,7 +20,7 @@ export const makeApiRequest = async <T extends Record<string, unknown> | Array<u
 ): Promise<{ status: number; body: T }> => {
   const {
     path,
-    options: { body, method, query },
+    options: { body, headers, method, query },
   } = params;
 
   const url = new URL(`http://localhost:3000${path}`);
@@ -32,14 +34,19 @@ export const makeApiRequest = async <T extends Record<string, unknown> | Array<u
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  const responseBody = await response.json();
-
-  return {
-    status: response.status,
-    body: responseBody,
-  };
+  const responseText = await response.text();
+  try {
+    const responseBody = JSON.parse(responseText);
+    return {
+      status: response.status,
+      body: responseBody as T,
+    };
+  } catch {
+    throw new Error(`Failed to parse response body: ${responseText}`);
+  }
 };

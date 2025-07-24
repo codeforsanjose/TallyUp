@@ -1,0 +1,252 @@
+openapi: 3.1.0
+info:
+  title: Tally Up API
+  version: 0.0.1
+  description: Tally Up API
+components:
+  securitySchemes:
+    JWTAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AuthRequestModel:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 1
+          pattern: ^[a-zA-Z0-9!@#$%^&*]{8,}$
+      required:
+        - email
+        - password
+    BaseResponseModel:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+      required:
+        - message
+    LoginResponseModel:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        message:
+          type: string
+          minLength: 1
+        refreshToken:
+          type: string
+        sessionId:
+          type: string
+      required:
+        - accessToken
+        - message
+        - refreshToken
+        - sessionId
+    PostMealsResponseModel:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+        mealId:
+          type: string
+      required:
+        - message
+        - mealId
+    PostMealsRequestModel:
+      type: object
+      properties:
+        adult:
+          type: integer
+          minimum: 0
+        inventory:
+          type: integer
+          minimum: 0
+        youth:
+          type: integer
+          minimum: 0
+      required:
+        - adult
+        - inventory
+        - youth
+    RefreshResponseModel:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+      required:
+        - message
+        - accessToken
+        - refreshToken
+    RefreshRequestModel:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+      required:
+        - refreshToken
+    RegisterResponseModel:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+        userId:
+          type: string
+      required:
+        - message
+        - userId
+    VerifyEmailResponseModel:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+        refreshToken:
+          type: string
+        sessionId:
+          type: string
+        userId:
+          type: string
+      required:
+        - message
+        - refreshToken
+        - sessionId
+        - userId
+  parameters: {}
+paths:
+  /login:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequestModel"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponseModel"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponseModel"
+  /meals:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostMealsRequestModel"
+      responses:
+        "200":
+          description: Meal posted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostMealsResponseModel"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponseModel"
+  /refresh:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequestModel"
+      responses:
+        "200":
+          description: Refresh token successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshResponseModel"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponseModel"
+  /register:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequestModel"
+      responses:
+        "200":
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponseModel"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponseModel"
+  /resend-verification-email:
+    get:
+      parameters:
+        - schema:
+            type: string
+            format: email
+          required: true
+          name: email
+          in: query
+      responses:
+        "200":
+          description: Verification email resent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponseModel"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponseModel"
+  /verify-email:
+    get:
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          required: true
+          name: token
+          in: query
+      responses:
+        "200":
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyEmailResponseModel"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BaseResponseModel"

@@ -27,7 +27,7 @@ export const build = async (configOverride: BuildConfig) => {
   if (genClient) {
     if (verbose) console.log('Generating API client from OpenAPI schema...');
     const { default: generateAPIClient } = await import('./gen-client.js');
-    await generateAPIClient({ baseUrl: genClientBaseUrl, reschema: true, verbose });
+    await generateAPIClient({ baseUrl: genClientBaseUrl, verbose });
   }
 
   try {
