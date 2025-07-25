@@ -33,7 +33,7 @@ beforeAll(async () => {
   const { users: usersTable } = client._.fullSchema;
   await client.insert(usersTable).values({
     id: mockUserUuid,
-    email: 'test@email.com',
+    email: 'email@email.com',
     role: 'admin',
     status: 'active',
     passwordHash: 'hashedpassword',

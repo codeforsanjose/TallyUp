@@ -9,6 +9,25 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  responses:
+    BadRequestResponse:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BaseResponseModel"
+    UnauthorizedResponse:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BaseResponseModel"
+    ForbiddenResponse:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BaseResponseModel"
   schemas:
     AuthRequestModel:
       type: object
@@ -141,32 +160,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/LoginResponseModel"
         "400":
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponseModel"
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
+        "403":
+          $ref: "#/components/responses/ForbiddenResponse"
   /meals:
     post:
+      security:
+        - JWTAuth: []
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/PostMealsRequestModel"
       responses:
-        "200":
+        "201":
           description: Meal posted successfully
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/PostMealsResponseModel"
         "400":
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponseModel"
-  /refresh:
+          $ref: "#/components/responses/BadRequestResponse"
+  /refresh-token:
     post:
       requestBody:
         content:
@@ -181,11 +198,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/RefreshResponseModel"
         "400":
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BaseResponseModel"
+          $ref: "#/components/responses/BadRequestResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedResponse"
   /register:
     post:
       requestBody:
@@ -194,14 +209,16 @@ paths:
             schema:
               $ref: "#/components/schemas/AuthRequestModel"
       responses:
-        "200":
+        "201":
           description: Registration successful
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/RegisterResponseModel"
         "400":
-          description: Invalid request
+          $ref: "#/components/responses/BadRequestResponse"
+        "409":
+          description: User already exists
           content:
             application/json:
               schema:

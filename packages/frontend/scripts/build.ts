@@ -5,8 +5,6 @@ import { hideBin } from 'yargs/helpers';
 import ViteConfig from '../vite.config.js';
 
 type BuildConfig = {
-  genClient?: boolean;
-  genClientBaseUrl?: string | null;
   outDir?: string;
   verbose?: boolean;
 };
@@ -15,20 +13,12 @@ export const build = async (configOverride: BuildConfig) => {
   console.log('Starting build process...');
 
   const defaults: Required<BuildConfig> = {
-    genClient: false,
-    genClientBaseUrl: null,
     outDir: 'dist',
     verbose: false,
   };
 
   const config = { ...defaults, ...configOverride };
-  const { genClient, genClientBaseUrl, outDir, verbose } = config;
-
-  if (genClient) {
-    if (verbose) console.log('Generating API client from OpenAPI schema...');
-    const { default: generateAPIClient } = await import('./gen-client.js');
-    await generateAPIClient({ baseUrl: genClientBaseUrl, verbose });
-  }
+  const { outDir, verbose } = config;
 
   try {
     await viteBuild({
@@ -78,6 +68,5 @@ if (import.meta.main) {
     .strict()
     .parseSync();
   const { outDir, verbose } = argv;
-  const genClient = argv['gen-client'];
-  await build({ genClient, outDir, verbose });
+  await build({ outDir, verbose });
 }

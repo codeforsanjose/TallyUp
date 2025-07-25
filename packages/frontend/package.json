@@ -3,10 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "main": "scripts/build.ts",
+  "main": "lib.ts",
   "scripts": {
     "build": "bun run scripts/build.ts",
-    "gen-client": "bun run scripts/gen-client.ts -- --reschema"
+    "gen-client": "bun run scripts/gen-client.ts -- --reschema",
+    "postinstall": "bun run scripts/postinstall.ts"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.7",

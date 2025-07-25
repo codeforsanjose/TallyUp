@@ -16,7 +16,7 @@ export const RegisterForm = component$(() => {
       password: password.value,
     });
 
-    if (res.status !== 200) {
+    if (res.status !== 201) {
       // TODO: Update openapi.yaml to use the correct status code
       status.value = {
         message: res.data.message || 'Registration failed',

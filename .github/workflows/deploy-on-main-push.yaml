@@ -21,6 +21,8 @@ jobs:
 
       - name: Install Dependencies
         run: bun install
+        env:
+          NODE_ENV: production
 
       - name: Build Project
         run: bun run build -v

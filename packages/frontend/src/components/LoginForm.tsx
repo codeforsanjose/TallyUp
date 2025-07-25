@@ -1,7 +1,14 @@
-import { $, component$, useSignal, type QRLEventHandlerMulti } from '@builder.io/qwik';
+import { $, component$, useSignal, type QRLEventHandlerMulti, type Signal } from '@builder.io/qwik';
 import { postLogin } from '../api';
 import { PrimaryButton } from './PrimaryButton';
-export const LoginForm = component$(() => {
+import type { User } from '../types';
+
+type LoginFormProps = {
+  user: Signal<User | undefined>;
+};
+
+export const LoginForm = component$((props: LoginFormProps) => {
+  const { user } = props;
   const email = useSignal('');
   const password = useSignal('');
   const status = useSignal({
@@ -27,6 +34,15 @@ export const LoginForm = component$(() => {
     status.value = {
       message: 'Login successful',
       type: 'success',
+    };
+
+    localStorage.setItem('refreshToken', res.data.refreshToken);
+    localStorage.setItem('accessToken', res.data.accessToken);
+    user.value = {
+      email: email.value,
+      refreshToken: res.data.refreshToken,
+      accessToken: res.data.accessToken,
+      lastRefreshed: new Date().toISOString(),
     };
   });
   return (

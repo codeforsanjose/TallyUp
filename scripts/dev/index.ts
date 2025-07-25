@@ -2,7 +2,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import tallyupConfig from '../../tallyup.config';
 import { asBunHandler } from './as-bun-handler';
-import { pushSchema } from './push-schema';
+import { pushSchema } from '../push-schema';
 
 type DevParams = {
   verbose?: boolean;
@@ -41,14 +41,14 @@ export default async function dev(params: DevParams = {}) {
   for (const { path, method, handler } of entries) {
     (routes[path] ??= {})[method] = async (req: Bun.BunRequest) => {
       try {
-        return await handler(req);
+        return handler(req);
       } catch (e) {
         return new Response((e as Error).message + ' ' + (e as Error).stack, {
-          status: 500,
+          status: req.method === 'OPTIONS' ? 204 : 500,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
           },
         });
       }
@@ -62,13 +62,13 @@ export default async function dev(params: DevParams = {}) {
       ...routes,
     },
     port,
-    fetch: (_req) => {
+    fetch: (req) => {
       return new Response(null, {
-        status: 404,
+        status: req.method === 'OPTIONS' ? 204 : 404,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
       });
     },
