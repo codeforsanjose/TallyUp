@@ -44,12 +44,7 @@ export const getPostMealAction = async (
   const { parsedEvent, verifyAccessToken, client, jwtKey } = deps;
 
   const user = await verifyAccessToken(jwtKey);
-  if (!user.success) {
-    return {
-      statusCode: 401,
-      body: { message: user.error.message },
-    };
-  }
+  if ('statusCode' in user) return user;
 
   if (!parsedEvent.success) {
     return {
@@ -62,7 +57,7 @@ export const getPostMealAction = async (
     body: { adult, inventory, youth },
   } = parsedEvent.data;
   const result = await client.insert(client._.fullSchema.meals).values({
-    staffCreatorId: user.data.userId,
+    staffCreatorId: user.userId,
     adult,
     inventory,
     youth,

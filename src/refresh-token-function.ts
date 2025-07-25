@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, not } from 'drizzle-orm';
 import assert from 'node:assert';
 import type { BaseResponseModel, RefreshResponseModel } from './gen/zod/schemas.ts';
-import { postRefreshBody } from './gen/zod/tally-up-api';
+import { postRefreshTokenBody } from './gen/zod/tally-up-api';
 import { getJwtKey } from './lib/auth/get-jwt-key';
 import { signAccessToken } from './lib/auth/tokens';
 import { getDbClient } from './lib/db';
@@ -16,7 +16,7 @@ import { fakeGetSecretValue, getSecretValue } from './lib/secrets';
 
 const refreshTokenDeps = mergeDependencies(
   parseEventDependency({
-    body: postRefreshBody,
+    body: postRefreshTokenBody,
   }),
   defineGetDependenciesFn(async () => {
     const { DB_URL_SECRET_ARN, JWT_SECRET_ARN } = process.env;

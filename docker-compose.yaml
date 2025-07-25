@@ -35,7 +35,8 @@ services:
       - .:/app
       - api_node_modules:/app/node_modules
     pull_policy: build
-    command: ['bun', '--hot', 'run', './scripts/dev']
+    command: >
+      sh -c "bun run scripts/seed.ts && bun --hot run './scripts/dev'"
     extra_hosts:
       - 'db.localtest.me:host-gateway'
     environment:
@@ -47,16 +48,17 @@ services:
       - JWT_SECRET=supersecret
   frontend:
     build:
-      context: ./frontend
+      context: .
       dockerfile: Dockerfile
     volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
+      - .:/app
+      - frontend_node_modules:/app/packages/frontend/node_modules
     depends_on:
       - api
     ports:
       - '5173:5173'
-    command: ['bun', 'run', 'scripts/dev', '--host=0.0.0.0']
+    command: >
+      sh -c "cd /app/packages/frontend && bun run scripts/dev --host=0.0.0.0"
 
 volumes:
   db_data:

@@ -6,4 +6,8 @@ COPY bun.lock .
 
 COPY package.json .
 
-RUN bun install --frozen-lockfile --ignore-scripts
+COPY packages/frontend/package.json frontend/package.json
+
+ENV NODE_ENV=development
+
+RUN bun install --ignore-scripts
