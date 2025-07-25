@@ -130,7 +130,7 @@ dist
 .pnp.*
 
 .aws-sam/
-openapi.yaml
-
-# Temporarily ignore the following files until they are properly handled
+openapi.json
 *.zip
+src/gen/
+cdk.out

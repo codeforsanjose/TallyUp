@@ -1,6 +1,7 @@
 import path from 'path';
 import archiver from 'archiver';
 import fs from 'fs';
+import generate from 'orval';
 
 const zipDir = async () => {
   const argon2ZipTarget = path.resolve(__dirname, '../../layers/argon2/argon2-layer.zip');
@@ -33,6 +34,8 @@ export const postinstall = async () => {
   await argon2Install.exited;
 
   await zipDir();
+
+  await generate();
 
   const frontendInstall = Bun.spawn({
     cmd: ['bun', 'install'],

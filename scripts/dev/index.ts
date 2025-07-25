@@ -1,13 +1,8 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { handler as loginHandler } from '../../src/login-function';
-import { handler as refreshTokenFunction } from '../../src/refresh-token-function';
-import { handler as registerHandler } from '../../src/register-function';
-import { handler as resendVerificationEmailFunction } from '../../src/resend-verification-email-function';
-import { handler as verifyEmailHandler } from '../../src/verify-email-function';
+import tallyupConfig from '../../tallyup.config';
 import { asBunHandler } from './as-bun-handler';
 import { pushSchema } from './push-schema';
-// @ts-ignore
 
 type DevParams = {
   verbose?: boolean;
@@ -34,20 +29,42 @@ export default async function dev(params: DevParams = {}) {
   }
 
   console.log(`Starting Bun server on port ${port}. Try fetching http://localhost:${port}/ping`);
+
+  const entries = await Promise.all(
+    tallyupConfig.functions.map(async ({ srcDir, path, method }) => {
+      const { handler } = await import(srcDir);
+      return { path, method: method.toUpperCase(), handler: asBunHandler(handler) };
+    }),
+  );
+
+  const routes: Record<string, Record<string, any>> = {};
+  for (const { path, method, handler } of entries) {
+    (routes[path] ??= {})[method] = async (req: Bun.BunRequest) => {
+      try {
+        return await handler(req);
+      } catch (e) {
+        return new Response((e as Error).message + ' ' + (e as Error).stack, {
+          status: 500,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          },
+        });
+      }
+    };
+  }
+
   Bun.serve({
     hostname: '0.0.0.0',
     routes: {
-      '/api/register': { POST: asBunHandler(registerHandler) },
-      '/api/login': { POST: asBunHandler(loginHandler) },
-      '/api/refresh-token': { POST: asBunHandler(refreshTokenFunction) },
-      '/api/resend-verification-email': asBunHandler(resendVerificationEmailFunction),
-      '/api/verify-email': asBunHandler(verifyEmailHandler),
       '/ping': () => new Response('pong'),
+      ...routes,
     },
     port,
     fetch: (_req) => {
       return new Response(null, {
-        status: 204,
+        status: 404,
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',

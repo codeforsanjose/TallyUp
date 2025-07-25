@@ -1,0 +1,37 @@
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 'latest'
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Build Project
+        run: bun run build -v
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::253016134262:role/TallyUpBackendStackStagin-tallyupGithubActionsRole1-H5x6v0wDEjb7
+          aws-region: us-west-2
+
+      - name: Deploy
+        run: DB_URL_SECRET_ARN='arn:aws:secretsmanager:us-west-2:253016134262:secret:dbConnectionSecretB11A2D98-a53954JuxmdC-RFmGcz' bun run deploy -v --env=staging
+
+permissions:
+  id-token: write
+  contents: read

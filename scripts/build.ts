@@ -4,7 +4,6 @@ import { resolve } from 'path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import type { Result } from '../src/lib/types';
-
 const outDir = resolve('dist');
 const buildDir = resolve(outDir, 'build');
 
@@ -92,23 +91,6 @@ export const build = async (cfg: BuildConfig) => {
   }
 
   mkdirSync(buildDir, { recursive: true });
-
-  // WARNING: The below code causes argon2 to be built one level above the function directory,
-  // which is not what we want. It should be built in the same directory as the function.
-  // This is a known issue with Bun's build system and needs to be addressed in the future.
-  // For now, we will use a workaround by calling Bun.build on each function file individually.
-  // const result = await Bun.build({
-  //   entrypoints: buildCandidates,
-  //   format: 'esm',
-  //   minify: {
-  //     syntax: true,
-  //     whitespace: true,
-  //   },
-  //   naming: '[dir]/[name]/index.mjs', // [dir=buildDir]/[name=functionName]/index.mjs
-  //   outdir: buildDir,
-  //   sourcemap: 'linked',
-  //   target: 'node',
-  // });
 
   if (verbose)
     console.log(

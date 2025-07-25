@@ -30,8 +30,7 @@ services:
     ports:
       - '3000:3000'
     depends_on:
-      db:
-        condition: service_healthy
+      - neonDbProxy
     volumes:
       - .:/app
       - api_node_modules:/app/node_modules
@@ -42,6 +41,10 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgres://postgres:postgres@db:5432
+      - DB_URL_SECRET_ARN=DB_URL
+      - DB_URL=postgres://postgres:postgres@db.localtest.me:5432/postgres
+      - JWT_SECRET_ARN=JWT_SECRET
+      - JWT_SECRET=supersecret
   frontend:
     build:
       context: ./frontend

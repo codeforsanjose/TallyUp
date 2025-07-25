@@ -1,13 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import type { AuthRequest, LoginResponse } from '../../src/lib/openapi';
 import { makeApiRequest } from './make-api-request';
 import { client } from './db-client';
 import { hash } from '@node-rs/argon2';
-import { notActiveMsg, invalidEmailMsg, loginSuccessMsg } from '../../src/login-function';
 import { count } from 'drizzle-orm';
+import type { AuthRequestModel, LoginResponseModel } from '../../src/gen/zod/schemas.ts';
 
-const makeLoginRequest = async (data: AuthRequest) => {
-  return makeApiRequest<LoginResponse>({
+const makeLoginRequest = async (data: AuthRequestModel) => {
+  return makeApiRequest<LoginResponseModel>({
     path: '/api/login',
     options: {
       method: 'POST',
@@ -27,6 +26,7 @@ beforeAll(async () => {
         parallelism: 1, // 1 thread
       }),
       status: 'active',
+      role: 'volunteer',
     },
     {
       email: 'inactive@email.com',
@@ -37,6 +37,7 @@ beforeAll(async () => {
         parallelism: 1, // 1 thread
       }),
       status: 'pending',
+      role: 'volunteer',
     },
   ]);
 });
@@ -45,14 +46,14 @@ afterAll(async () => {
   await client.delete(client._.fullSchema.users);
 });
 
-describe('Verify Email Flow', () => {
+describe('Login Flow', () => {
   test('If I make a request with an unregistered email, I get an error', async () => {
     const response = await makeLoginRequest({
       email: 'unregistered@email.com',
       password: 'P@ssword123!',
     });
-    expect(response.status).toBe(400);
-    expect(response.body.message).toEqual(invalidEmailMsg);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Invalid email or password');
 
     const countResult = await client.select({ count: count() }).from(client._.fullSchema.sessions);
     expect(countResult[0]!.count).toBe(0);
@@ -63,8 +64,8 @@ describe('Verify Email Flow', () => {
       email: 'inactive@email.com',
       password: 'P@ssword123!',
     });
-    expect(response.status).toBe(400);
-    expect(response.body.message).toEqual(notActiveMsg);
+    expect(response.status).toBe(403);
+    expect(response.body.message).toEqual('User is not active');
 
     const countResult = await client.select({ count: count() }).from(client._.fullSchema.sessions);
     expect(countResult[0]!.count).toBe(0);
@@ -75,8 +76,8 @@ describe('Verify Email Flow', () => {
       email: 'email@email.com',
       password: 'WrongPassword!',
     });
-    expect(response.status).toBe(400);
-    expect(response.body.message).toEqual(invalidEmailMsg);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Invalid email or password');
 
     const countResult = await client.select({ count: count() }).from(client._.fullSchema.sessions);
     expect(countResult[0]!.count).toBe(0);
@@ -88,9 +89,8 @@ describe('Verify Email Flow', () => {
       password: 'P@ssword123!',
     });
     expect(response.status).toBe(200);
-    expect(response.body.message).toEqual(loginSuccessMsg);
+    expect(response.body.message).toEqual('Login successful');
     expect(response.body.refreshToken).toBeDefined();
-    expect(response.body.sessionId).toBeDefined();
 
     const countResult = await client.select({ count: count() }).from(client._.fullSchema.sessions);
     expect(countResult[0]!.count).toBe(1);
